@@ -1,0 +1,19 @@
+=
+
+== OpenTelemetry
+
+Differents conf regarding volume path
+
+https://github.com/grafana/docker-otel-lgtm/blob/main/docker/loki-config.yaml
+
+Interesting regarding time retention (15 days by default)
+
+https://github.com/grafana/docker-otel-lgtm/discussions/151
+
+wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.7.0/opentelemetry-javaagent.jar
+
+retrieve all otel conf from here
+
+https://github.com/quarkusio/quarkus/blob/3.30/extensions/observability-devservices/testcontainers/src/main/java/io/quarkus/observability/testcontainers/LgtmContainer.java#L69
+=> have a look inside container from devservice
+=>
