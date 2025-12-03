@@ -17,3 +17,9 @@ retrieve all otel conf from here
 https://github.com/quarkusio/quarkus/blob/3.30/extensions/observability-devservices/testcontainers/src/main/java/io/quarkus/observability/testcontainers/LgtmContainer.java#L69
 => have a look inside container from devservice
 =>
+
+FCK je dois exclure du quarkus log les services non quarkus
+Je dois modifier le filtre sur le service ... comment faire
+
+ensuite modifier parce que je suis en natif et intger le dashboard jmx pour quarkus
+et integrer le dahsbard jmx globals pour l'ensembles des services compatible (kafka, connect ...)

@@ -77,7 +77,7 @@ public class PriseDeCommandeEndpoint {
                         new CommandeIdentifier(numero, datePriseDeCommandesParNumeroDeTable.get(numero)),
                         new Plat(name))));
     }
-
+// FCK retourner une ReponseDTO avec la CommandeDTO et une liste d'eventDTO
     @Path("/{numeroDeTable}/finaliserLaCommande")
     @POST
     @Produces(MediaType.APPLICATION_JSON)

@@ -1,0 +1,41 @@
+discovery.docker "docker" {
+  host = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+discovery.docker "podman" {
+  host = "unix:///run/podman/podman.sock"
+  refresh_interval = "5s"
+}
+
+discovery.relabel "logs_integrations" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.*)"
+    target_label = "service_name"
+  }
+}
+
+loki.source.docker "docker" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.docker.targets
+  labels     = {"platform" = "docker"}
+  relabel_rules = discovery.relabel.logs_integrations.rules
+  forward_to = [loki.write.grafana_loki.receiver]
+}
+
+loki.source.docker "podman" {
+  host       = "unix:///run/podman/podman.sock"
+  targets    = discovery.docker.podman.targets
+  labels     = {"platform" = "podman"}
+  relabel_rules = discovery.relabel.logs_integrations.rules
+  forward_to = [loki.write.grafana_loki.receiver]
+}
+
+loki.write "grafana_loki" {
+  endpoint {
+    url = "http://otel-lgtm:3100/loki/api/v1/push"
+  }
+}

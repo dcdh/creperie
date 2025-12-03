@@ -2,6 +2,7 @@ auth_enabled: false
 
 server:
   http_listen_port: 3100
+  http_listen_address: 0.0.0.0
 
 common:
   instance_addr: 127.0.0.1
@@ -26,7 +27,7 @@ schema_config:
         period: 24h
 
 ruler:
-  alertmanager_url: http://localhost:9093
+  alertmanager_url: http://otel-lgtm:9093
 
 pattern_ingester:
   lifecycler:

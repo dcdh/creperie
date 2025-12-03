@@ -11,26 +11,26 @@ receivers:
         - job_name: "opentelemetry-collector"
           scrape_interval: 1s
           static_configs:
-            - targets: ["localhost:8888"]
+            - targets: ["salle-prise-de-commande:8888"]
 
 processors:
   batch:
 
 exporters:
   otlphttp/metrics:
-    endpoint: http://localhost:9090/api/v1/otlp
+    endpoint: http://otel-lgtm:9090/api/v1/otlp
     tls:
       insecure: true
   otlphttp/traces:
-    endpoint: http://localhost:4418
+    endpoint: http://otel-lgtm:4418
     tls:
       insecure: true
   otlphttp/logs:
-    endpoint: http://localhost:3100/otlp
+    endpoint: http://otel-lgtm:3100/otlp
     tls:
       insecure: true
   otlp/profiles:
-    endpoint: http://localhost:4040
+    endpoint: http://otel-lgtm:4040
     tls:
       insecure: true
   debug/metrics:
