@@ -5,13 +5,13 @@ import com.damdamdeo.pulse.extension.core.event.Event;
 
 import java.util.Objects;
 
-public record PlatAjoute(String name) implements Event {
+public record PlatAjoute(String nom) implements Event {
 
     public PlatAjoute {
-        Objects.requireNonNull(name);
+        Objects.requireNonNull(nom);
     }
 
     public Plat plat() {
-        return new Plat(name);
+        return new Plat(nom);
     }
 }

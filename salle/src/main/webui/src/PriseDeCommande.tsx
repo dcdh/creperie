@@ -4,22 +4,22 @@ import {
     postPriseDeCommandeCommencerLaPriseDeCommande,
     postPriseDeCommandeNumeroDeTableAjouterPlat, postPriseDeCommandeNumeroDeTableFinaliserLaCommande
 } from "./api/endpoints.ts";
-import {Commande, Status} from "./api/model";
+import {Response, Status} from "./api/model";
 
 export default function PriseDeCommande() {
     const [numeroDeTable, setNumeroDeTable] = useState(1);
     const [nombreDeConvives, setNombreDeConvives] = useState(1);
     const [platNom, setPlatNom] = useState("");
-    const [commande, setCommande] = useState<Commande | null>(null);
-    const saisiCompositionTable = commande === null || commande.status === Status.FINALISEE;
-    const saisiContenuCommande = commande !== null && commande.status === Status.EN_COURS_DE_PRISE;
+    const [response, setResponse] = useState<Response | null>(null);
+    const saisiCompositionTable = response === null || response.commande.status === Status.FINALISEE;
+    const saisiContenuCommande = response !== null && response.commande.status === Status.EN_COURS_DE_PRISE;
 
     const commencer = async () => {
         const res = await postPriseDeCommandeCommencerLaPriseDeCommande({
             numeroDeTable,
             nombreDeConvives,
         });
-        setCommande(res);
+        setResponse(res);
     };
 
 
@@ -27,14 +27,14 @@ export default function PriseDeCommande() {
         const res = await postPriseDeCommandeNumeroDeTableAjouterPlat(numeroDeTable, {
             nom: platNom,
         });
-        setCommande(res);
+        setResponse(res);
         setPlatNom("");
     };
 
 
     const finaliser = async () => {
         const res = await postPriseDeCommandeNumeroDeTableFinaliserLaCommande(numeroDeTable);
-        setCommande(res);
+        setResponse(res);
     };
 
 
@@ -98,11 +98,11 @@ export default function PriseDeCommande() {
                         </Button>
 
 
-                        {commande && (
+                        {response && (
                             <Card className="p-4 bg-gray-50 mt-4">
                                 <Typography variant="subtitle1">Commande mise à jour :</Typography>
                                 <pre className="text-sm mt-2 bg-gray-200 p-2 rounded">
-{JSON.stringify(commande, null, 2)}
+{JSON.stringify(response, null, 2)}
 </pre>
                             </Card>
                         )}

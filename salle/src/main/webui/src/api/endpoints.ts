@@ -5,9 +5,9 @@
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
 import type {
-  Commande,
   PostPriseDeCommandeCommencerLaPriseDeCommandeBody,
   PostPriseDeCommandeNumeroDeTableAjouterPlatBody,
+  Response,
 } from "./model";
 
 import { customInstance } from "./mutator/custom-instance";
@@ -38,7 +38,7 @@ export const postPriseDeCommandeCommencerLaPriseDeCommande = (
     );
   }
 
-  return customInstance<Commande>({
+  return customInstance<Response>({
     url: `/prise_de_commande/commencerLaPriseDeCommande`,
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -61,7 +61,7 @@ export const postPriseDeCommandeNumeroDeTableAjouterPlat = (
     );
   }
 
-  return customInstance<Commande>({
+  return customInstance<Response>({
     url: `/prise_de_commande/${numeroDeTable}/ajouterPlat`,
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -75,7 +75,7 @@ export const postPriseDeCommandeNumeroDeTableAjouterPlat = (
 export const postPriseDeCommandeNumeroDeTableFinaliserLaCommande = (
   numeroDeTable: number,
 ) => {
-  return customInstance<Commande>({
+  return customInstance<Response>({
     url: `/prise_de_commande/${numeroDeTable}/finaliserLaCommande`,
     method: "POST",
   });
