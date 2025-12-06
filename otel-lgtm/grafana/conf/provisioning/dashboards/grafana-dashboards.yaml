@@ -13,3 +13,6 @@ providers:
   - name: Quarkus OpenTelemetry logging
     type: file
     options: { path: /otel-lgtm/grafana-dashboard-opentelemetry-logging.json, foldersFromFilesStructure: false }
+  - name: Debezium
+    type: file
+    options: { path: /otel-lgtm/debezium-dashboard.json, foldersFromFilesStructure: false }

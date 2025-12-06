@@ -40,10 +40,13 @@ services:
       - '9092'
       - '9997'
       - '29092'
+      - '9011'
     environment:
       - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
       - NODE_ID=1
       - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - JMXHOST=0.0.0.0
+      - JMXPORT=9011
     healthcheck:
       start_period: 10s
       interval: 10s
@@ -62,11 +65,16 @@ services:
   # https://debezium.io/documentation/reference/stable/operations/monitoring.html
   # https://github.com/debezium/debezium-examples/tree/main/monitoring
   connect:
-    image: quay.io/debezium/connect:3.3.1.Final
+    build:
+      context: debezium-jmx-exporter
+      args:
+        DEBEZIUM_VERSION: 3.3.1.Final
+        JMX_AGENT_VERSION: 1.0.1
     container_name: connect
     restart: always
     ports:
       - '8083'
+      - '9012'
     links:
       - kafka
       - postgres
@@ -76,6 +84,9 @@ services:
       - STATUS_STORAGE_TOPIC=my_connect_statuses
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_OPTS=-javaagent:/kafka/etc/jmx_prometheus_javaagent.jar=7071:/kafka/etc/config.yml
+      - JMXHOST=0.0.0.0
+      - JMXPORT=9012
     healthcheck:
       start_period: 10s
       interval: 10s
@@ -150,6 +161,7 @@ services:
     ports:
       - '3000:3000'
     volumes:
+      - ./otel-lgtm/debezium-dashboard.json:/otel-lgtm/debezium-dashboard.json:ro
       - ./otel-lgtm/grafana-dashboard-opentelemetry-logging.json:/otel-lgtm/grafana-dashboard-opentelemetry-logging.json:ro
       - ./otel-lgtm/grafana-dashboard-quarkus-micrometer-opentelemetry.json:/otel-lgtm/grafana-dashboard-quarkus-micrometer-opentelemetry.json:ro
       - ./otel-lgtm/grafana-dashboard-quarkus-micrometer-otlp.json:/otel-lgtm/grafana-dashboard-quarkus-micrometer-otlp.json:ro

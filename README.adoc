@@ -23,3 +23,7 @@ Je dois modifier le filtre sur le service ... comment faire
 
 ensuite modifier parce que je suis en natif et intger le dashboard jmx pour quarkus
 et integrer le dahsbard jmx globals pour l'ensembles des services compatible (kafka, connect ...)
+
+== Kafka
+
+https://github.com/mcagriaktas/kafka-lab
