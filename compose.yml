@@ -30,12 +30,15 @@ services:
         pg_isready
       ]
       timeout: 5s
+  # https://debezium.io/documentation/reference/stable/operations/monitoring.html
+  # https://github.com/debezium/debezium-examples/tree/main/monitoring
   kafka:
     image: quay.io/debezium/kafka:3.3.1.Final
     container_name: kafka
     restart: always
     ports:
       - '9092'
+      - '9997'
       - '29092'
     environment:
       - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
@@ -56,6 +59,8 @@ services:
       timeout: 5s
     depends_on:
       - postgres
+  # https://debezium.io/documentation/reference/stable/operations/monitoring.html
+  # https://github.com/debezium/debezium-examples/tree/main/monitoring
   connect:
     image: quay.io/debezium/connect:3.3.1.Final
     container_name: connect
@@ -85,6 +90,38 @@ services:
     depends_on:
       - postgres
       - kafka
+  # https://github.com/kafbat/kafka-ui/blob/main/documentation/compose/kafbat-ui.yaml
+  # https://github.com/kafbat/kafka-ui/blob/main/documentation/compose/ui-with-jmx-exporter.yaml
+  kafbat-ui:
+    container_name: kafbat-ui
+    image: ghcr.io/kafbat/kafka-ui:2e62ea1
+    ports:
+      - 8080:8080
+    depends_on:
+      - kafka
+      - connect
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_METRICS_PORT=9997
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=debezium
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://connect:8083
+      - DYNAMIC_CONFIG_ENABLED=true
+      - KAFKA_CLUSTERS_0_METRICS_STORE_PROMETHEUS_URL=http://otel-lgtm:9090
+      - KAFKA_CLUSTERS_0_METRICS_STORE_PROMETHEUS_REMOTEWRITE=true
+      - KAFKA_CLUSTERS_0_METRICS_STORE_KAFKA_TOPIC=kafka_metrics
+    healthcheck:
+      start_period: 12s
+      interval: 1s
+      retries: 5
+      test: [
+        CMD,
+        wget,
+        -q,
+        --spider,
+        'http://127.0.0.1:8080'
+      ]
+      timeout: 1s
   openbao:
     image: quay.io/openbao/openbao:2.4.4
     container_name: openbao
@@ -155,6 +192,7 @@ services:
     restart: always
     ports:
       - '8081:8080'
+      - '9091:9090'
     links:
       - kafka
       - postgres
