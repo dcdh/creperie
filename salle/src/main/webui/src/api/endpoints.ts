@@ -39,7 +39,7 @@ export const postPriseDeCommandeCommencerLaPriseDeCommande = (
   }
 
   return customInstance<Response>({
-    url: `/prise_de_commande/commencerLaPriseDeCommande`,
+    url: `/priseDeCommande/commencerLaPriseDeCommande`,
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     data: formUrlEncoded,
@@ -62,7 +62,7 @@ export const postPriseDeCommandeNumeroDeTableAjouterPlat = (
   }
 
   return customInstance<Response>({
-    url: `/prise_de_commande/${numeroDeTable}/ajouterPlat`,
+    url: `/priseDeCommande/${numeroDeTable}/ajouterPlat`,
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     data: formUrlEncoded,
@@ -76,7 +76,7 @@ export const postPriseDeCommandeNumeroDeTableFinaliserLaCommande = (
   numeroDeTable: number,
 ) => {
   return customInstance<Response>({
-    url: `/prise_de_commande/${numeroDeTable}/finaliserLaCommande`,
+    url: `/priseDeCommande/${numeroDeTable}/finaliserLaCommande`,
     method: "POST",
   });
 };

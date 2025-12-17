@@ -15,9 +15,10 @@ import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.openapi.annotations.media.DiscriminatorMapping;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
+import java.time.Instant;
 import java.util.*;
 
-@Path("prise_de_commande")
+@Path("priseDeCommande")
 public class PriseDeCommandeEndpoint {
 
     private final CommandHandler<Commande, CommandeIdentifier> commandeCommandHandler;
@@ -42,6 +43,14 @@ public class PriseDeCommandeEndpoint {
         }
     }
 
+    @Schema(name = "NombreDeConvives", required = true, requiredProperties = {"nombre"})
+    public record NombreDeConvivesDTO(Integer nombre) {
+
+        public static NombreDeConvivesDTO from(final NombreDeConvives nombreDeConvives) {
+            return new NombreDeConvivesDTO(nombreDeConvives.nombre());
+        }
+    }
+
     @Schema(
             name = "Event",
             description = "Generic events",
@@ -63,15 +72,15 @@ public class PriseDeCommandeEndpoint {
     }
 
     @Schema(name = "Event", required = true, requiredProperties = {"nombreDeConvives", "type"})
-    public record CommandeEnCoursDePriseDTO(Integer nombreDeConvives) implements EventDTO {
+    public record CommandeEnCoursDePriseDTO(NombreDeConvivesDTO nombreDeConvives) implements EventDTO {
         @Override
         public String getType() {
             return "CommandeEnCoursDePrise";
         }
     }
 
-    @Schema(name = "Event", required = true, requiredProperties = {"nom", "type"})
-    public record PlatAjouteDTO(String nom) implements EventDTO {
+    @Schema(name = "Event", required = true, requiredProperties = {"plat", "type"})
+    public record PlatAjouteDTO(PlatDTO plat) implements EventDTO {
         @Override
         public String getType() {
             return "PlatAjoute";
@@ -91,14 +100,34 @@ public class PriseDeCommandeEndpoint {
 
     }
 
-    @Schema(name = "Commande", required = true, requiredProperties = {"numeroDeTable", "datePriseDeCommande", "nombreDeConvives", "plats", "status"})
-    public record CommandeDTO(Integer numeroDeTable, Long datePriseDeCommande, Integer nombreDeConvives, List<PlatDTO> plats, Status status) {
+    @Schema(name = "NumeroDeTable", required = true, requiredProperties = {"numero"})
+    public record NumeroDeTableDTO(Integer numero) {
+
+    }
+
+    @Schema(name = "DatePriseDeCommande", required = true, requiredProperties = {"date"})
+    public record DatePriseDeCommandeDTO(Instant date) {
+
+    }
+
+    @Schema(name = "CommandeId", required = true, requiredProperties = {"numeroDeTable", "datePriseDeCommande"})
+    public record CommandeIdDTO(NumeroDeTableDTO numeroDeTableDTO,
+                                DatePriseDeCommandeDTO datePriseDeCommande) {
+
+    }
+
+    @Schema(name = "Commande", required = true, requiredProperties = {"commandeId", "nombreDeConvives", "plats", "status"})
+    public record CommandeDTO(CommandeIdDTO commandeId,
+                              NombreDeConvivesDTO nombreDeConvives,
+                              List<PlatDTO> plats,
+                              Status status) {
 
         public static CommandeDTO from(final Commande commande) {
             return new CommandeDTO(
-                    commande.id().numeroDeTable().numero(),
-                    commande.id().datePriseDeCommande().toEpochMilli(),
-                    commande.nombreDeConvives().nombre(),
+                    new CommandeIdDTO(
+                            new NumeroDeTableDTO(commande.id().numeroDeTable().numero()),
+                            new DatePriseDeCommandeDTO(commande.id().datePriseDeCommande().date())),
+                    new NombreDeConvivesDTO(commande.nombreDeConvives().nombre()),
                     commande.plats().stream().map(PlatDTO::from).toList(),
                     commande.status());
         }
@@ -106,8 +135,8 @@ public class PriseDeCommandeEndpoint {
 
     private EventDTO from(final Event event) {
         return switch (event) {
-            case CommandeEnCoursDePrise e -> new CommandeEnCoursDePriseDTO(e.nombreDeConvives());
-            case PlatAjoute e -> new PlatAjouteDTO(e.nom());
+            case CommandeEnCoursDePrise e -> new CommandeEnCoursDePriseDTO(new NombreDeConvivesDTO(e.nombreDeConvives().nombre()));
+            case PlatAjoute e -> new PlatAjouteDTO(new PlatDTO(e.plat().nom()));
             case CommandeFinalisee e -> new CommandeFinaliseeDTO();
             default -> throw new IllegalStateException("unhandled event: " + event);
         };

@@ -1,4 +1,4 @@
-import { TextField, Button, Card, CardContent, Typography, Stack } from "@mui/material";
+import { TextField, Button, Card, CardContent, Typography, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import {useState} from "react";
 import {
     postPriseDeCommandeCommencerLaPriseDeCommande,
@@ -9,7 +9,6 @@ import {Response, Status} from "./api/model";
 export default function PriseDeCommande() {
     const [numeroDeTable, setNumeroDeTable] = useState(1);
     const [nombreDeConvives, setNombreDeConvives] = useState(1);
-    const [platNom, setPlatNom] = useState("");
     const [response, setResponse] = useState<Response | null>(null);
     const saisiCompositionTable = response === null || response.commande.status === Status.FINALISEE;
     const saisiContenuCommande = response !== null && response.commande.status === Status.EN_COURS_DE_PRISE;
@@ -23,12 +22,11 @@ export default function PriseDeCommande() {
     };
 
 
-    const ajouterPlat = async () => {
+    const ajouterPlat = async (nom: string) => {
         const res = await postPriseDeCommandeNumeroDeTableAjouterPlat(numeroDeTable, {
-            nom: platNom,
+            nom: nom,
         });
         setResponse(res);
-        setPlatNom("");
     };
 
 
@@ -48,14 +46,25 @@ export default function PriseDeCommande() {
 
 
                     <Stack spacing={3}>
-                        <TextField
-                            type="number"
-                            label="Numéro de table"
-                            value={numeroDeTable}
-                            onChange={(e) => setNumeroDeTable(Number(e.target.value))} disabled={!saisiCompositionTable}
-                            fullWidth
-                        />
+                        <Typography variant="subtitle1" className="text-center">
+                            Numéro de table
+                        </Typography>
 
+                        <ToggleButtonGroup
+                            value={numeroDeTable}
+                            exclusive
+                            onChange={(_, value) => {
+                                if (value !== null) setNumeroDeTable(value);
+                            }}
+                            disabled={!saisiCompositionTable}
+                            fullWidth
+                        >
+                            {[...Array(10)].map((_, i) => (
+                                <ToggleButton key={i + 1} value={i + 1}>
+                                    {i + 1}
+                                </ToggleButton>
+                            ))}
+                        </ToggleButtonGroup>
 
                         <TextField
                             type="number"
@@ -67,31 +76,34 @@ export default function PriseDeCommande() {
 
 
                         <Button variant="contained" onClick={commencer} disabled={!saisiCompositionTable}>
-                            Commencer la commande
+                            Commencer la prise de commande
                         </Button>
 
+                        <Typography variant="subtitle1" className="text-center">
+                            Plat à ajouter
+                        </Typography>
 
-                        <TextField
-                            select
-                            label="Nom du plat"
-                            value={platNom}
-                            onChange={(e) => setPlatNom(e.target.value)}
-                            SelectProps={{ native: true }}
-                            fullWidth
-                            disabled={!saisiContenuCommande}
-                        >
-                            <option value=""></option>
-                            <option value="oeuf emental">oeuf emental</option>
-                            <option value="oeuf jambon blanc">oeuf jambon blanc</option>
-                            <option value="nutella">nutella</option>
-                            <option value="caramel beurre salé">caramel beurre salé</option>
-                        </TextField>
-
-
-                        <Button variant="outlined" onClick={ajouterPlat} disabled={!platNom || !saisiContenuCommande}>
-                            Ajouter un plat
-                        </Button>
-
+                        <Stack spacing={1} direction={"row"}>
+                            {[
+                                "oeuf emental",
+                                "oeuf jambon blanc",
+                                "nutella",
+                                "caramel beurre salé",
+                            ].map((plat) => {
+                                return (
+                                    <Button
+                                        key={plat}
+                                        variant={"outlined"}
+                                        color={"inherit"}
+                                        onClick={() => ajouterPlat(plat)}
+                                        disabled={!saisiContenuCommande}
+                                        fullWidth
+                                    >
+                                        {plat}
+                                    </Button>
+                                );
+                            })}
+                        </Stack>
 
                         <Button color="success" variant="contained" onClick={finaliser} disabled={!saisiContenuCommande}>
                             Finaliser la commande

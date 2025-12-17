@@ -1,14 +1,11 @@
 import {useEffect, useState} from "react";
 import {useSSE} from "react-hooks-sse";
 import {Alert, Snackbar} from "@mui/material";
-
-interface CommandePretePourEtreServieDTO {
-    numeroDeTable: number;
-}
+import {CommandePretePourEtreServie} from "./api/model";
 
 export function CuisineNotifications() {
-    const cuisineNotification = useSSE<CommandePretePourEtreServieDTO | undefined>(
-        "cuisine",
+    const cuisineNotification = useSSE<CommandePretePourEtreServie | undefined>(
+        "CommandePretePourEtreServie",
         undefined
     );
 
@@ -27,9 +24,8 @@ export function CuisineNotifications() {
         <>
             <Snackbar
                 open={open}
-                autoHideDuration={3000}
                 onClose={() => setOpen(false)}
-                anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+                anchorOrigin={{vertical: "top", horizontal: "center"}}
             >
                 <Alert
                     onClose={() => setOpen(false)}

@@ -6,6 +6,9 @@
  */
 
 export * from "./commande";
+export * from "./commandeId";
+export * from "./commandePretePourEtreServie";
+export * from "./datePriseDeCommande";
 export * from "./event";
 export * from "./event1";
 export * from "./event1Type";
@@ -14,6 +17,9 @@ export * from "./event2Type";
 export * from "./event3";
 export * from "./eventDTO";
 export * from "./eventType";
+export * from "./instant";
+export * from "./nombreDeConvives";
+export * from "./numeroDeTable";
 export * from "./plat";
 export * from "./postPriseDeCommandeCommencerLaPriseDeCommandeBody";
 export * from "./postPriseDeCommandeNumeroDeTableAjouterPlatBody";

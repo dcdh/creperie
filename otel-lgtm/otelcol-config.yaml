@@ -11,7 +11,7 @@ receivers:
         - job_name: "opentelemetry-collector"
           scrape_interval: 1s
           static_configs:
-            - targets: ["salle-prise-de-commande:8888"]
+            - targets: ["salle-prise-de-commande:8888", "cuisine-production:8888", "gestion-statistics:8888"]
         - job_name: "jmx-connect-collector"
           scrape_interval: 1s
           static_configs:

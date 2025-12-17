@@ -12,6 +12,7 @@ import com.damdamdeo.pulse.extension.core.event.EventAppender;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,13 +36,13 @@ public class Commande extends AggregateRoot<CommandeIdentifier> {
     public void handle(final CommencerLaPriseDeCommande commencerLaPriseDeCommande, final EventAppender eventAppender) {
         Objects.requireNonNull(commencerLaPriseDeCommande);
         Objects.requireNonNull(eventAppender);
-        eventAppender.append(new CommandeEnCoursDePrise(commencerLaPriseDeCommande.nombreDeConvives().nombre()));
+        eventAppender.append(new CommandeEnCoursDePrise(commencerLaPriseDeCommande.nombreDeConvives()));
     }
 
     public void handle(final AjouterPlat ajouterPlat, final EventAppender eventAppender) {
         Objects.requireNonNull(ajouterPlat);
         Objects.requireNonNull(eventAppender);
-        eventAppender.append(new PlatAjoute(ajouterPlat.plat().nom()));
+        eventAppender.append(new PlatAjoute(ajouterPlat.plat()));
     }
 
     public void handle(final FinaliserLaCommande finaliserLaCommande, final EventAppender eventAppender) {
@@ -51,7 +52,7 @@ public class Commande extends AggregateRoot<CommandeIdentifier> {
     }
 
     public void on(final CommandeEnCoursDePrise commandeEnCoursDePrise) {
-        this.nombreDeConvives = new NombreDeConvives(commandeEnCoursDePrise.nombreDeConvives());
+        this.nombreDeConvives = commandeEnCoursDePrise.nombreDeConvives();
         this.status = Status.EN_COURS_DE_PRISE;
     }
 
@@ -68,7 +69,7 @@ public class Commande extends AggregateRoot<CommandeIdentifier> {
     }
 
     public List<Plat> plats() {
-        return plats;
+        return Collections.unmodifiableList(plats);
     }
 
     public Status status() {

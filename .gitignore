@@ -1,3 +1,9 @@
 /salle/target/
 /salle/src/main/webui/node_modules/
 /salle/src/main/resources/META-INF/resources/
+/gestion/target/
+/gestion/src/main/webui/node_modules/
+/gestion/src/main/resources/META-INF/resources/
+/cuisine/target/
+/cuisine/src/main/webui/node_modules/
+/cuisine/src/main/resources/META-INF/resources/

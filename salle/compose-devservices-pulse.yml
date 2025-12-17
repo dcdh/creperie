@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:17.6-alpine3.22
+    labels:
+      io.quarkus.devservices.compose.wait_for.logs: .*database system is ready to
+        accept connections.*
+    restart: always
+    ports:
+    - '5432'
+    environment:
+    - POSTGRES_PASSWORD=quarkus
+    - POSTGRES_USER=quarkus
+    - POSTGRES_DB=quarkus
+    command:
+    - postgres
+    - -c
+    - wal_level=logical
+    - -c
+    - hot_standby=on
+    - -c
+    - max_wal_senders=10
+    - -c
+    - max_replication_slots=10
+    - -c
+    - synchronized_standby_slots=replication_slot
+    healthcheck:
+      timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 5
+      test: [
+        CMD,
+        pg_isready
+      ]
+      
+    volumes:
+    - ./salle_prisedecommande_writer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_writer.sql
+    - ./salle_prisedecommande_idempotency_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_idempotency_consumer.sql
+  kafka:
+    image: debezium-for-dev-service/kafka:3.3.1.Final
+    labels:
+      io.quarkus.devservices.compose.exposed_ports: /tmp/ports
+    restart: always
+    ports:
+    - '9092'
+    - '29092'
+    environment:
+    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
+    - NODE_ID=1
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    healthcheck:
+      timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 5
+      test: [
+        CMD,
+        ./bin/kafka-topics.sh,
+        --bootstrap-server,
+        'kafka:29092',
+        --list
+      ]
+      
+    depends_on:
+    - postgres
+  connect:
+    image: quay.io/debezium/connect:3.3.1.Final
+    labels:
+      io.quarkus.devservices.compose.config_map.port.8083: pulse.debezium.connect.port
+    restart: always
+    ports:
+    - '8083'
+    links:
+    - kafka
+    - postgres
+    environment:
+    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - BOOTSTRAP_SERVERS=kafka:29092
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - GROUP_ID=1
+    healthcheck:
+      timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 5
+      test: [
+        CMD,
+        curl,
+        -f,
+        'http://localhost:8083/connectors'
+      ]
+      
+    depends_on:
+    - postgres
+    - kafka

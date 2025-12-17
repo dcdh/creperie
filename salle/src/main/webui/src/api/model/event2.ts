@@ -4,9 +4,10 @@
  * salle_priseDeCommande API
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
+import type { Plat } from "./plat";
 import type { Event2Type } from "./event2Type";
 
 export interface Event2 {
-  nom: string;
+  plat: Plat;
   type: Event2Type;
 }
