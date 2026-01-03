@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.damdamdeo</groupId>
+        <groupId>com.damdamdeo.creperie</groupId>
         <artifactId>creperie-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
@@ -58,16 +58,20 @@
         </dependency>
 
         <dependency>
-            <groupId>com.damdamdeo</groupId>
-            <artifactId>pulse-writer-extension</artifactId>
+            <groupId>com.damdamdeo.pulse</groupId>
+            <artifactId>quarkus-pulse-writer-extension</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.damdamdeo</groupId>
-            <artifactId>pulse-publisher-extension</artifactId>
+            <groupId>com.damdamdeo.pulse</groupId>
+            <artifactId>quarkus-pulse-publisher-extension</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.damdamdeo</groupId>
-            <artifactId>pulse-consumer-extension</artifactId>
+            <groupId>com.damdamdeo.pulse</groupId>
+            <artifactId>quarkus-pulse-consumer-extension</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.damdamdeo.pulse</groupId>
+            <artifactId>quarkus-pulse-live-notifier-extension</artifactId>
         </dependency>
 
         <dependency>

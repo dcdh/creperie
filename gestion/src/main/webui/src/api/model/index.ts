@@ -11,3 +11,4 @@ export * from "./frequentationStatistique";
 export * from "./instant";
 export * from "./localDate";
 export * from "./plat";
+export * from "./zonedDateTime";

@@ -22,8 +22,8 @@ export const getEvents = () => {
 /**
  * @summary Register
  */
-export const getSseStream = () => {
-  return customInstance<void>({ url: `/sse/stream`, method: "GET" });
+export const getNotifierSseStream = () => {
+  return customInstance<void>({ url: `/notifier/sse/stream`, method: "GET" });
 };
 
 /**
@@ -49,8 +49,8 @@ export const getStatistiquesFrequentation = () => {
 export type GetEventsResult = NonNullable<
   Awaited<ReturnType<typeof getEvents>>
 >;
-export type GetSseStreamResult = NonNullable<
-  Awaited<ReturnType<typeof getSseStream>>
+export type GetNotifierSseStreamResult = NonNullable<
+  Awaited<ReturnType<typeof getNotifierSseStream>>
 >;
 export type GetStatistiquesCommandesResult = NonNullable<
   Awaited<ReturnType<typeof getStatistiquesCommandes>>

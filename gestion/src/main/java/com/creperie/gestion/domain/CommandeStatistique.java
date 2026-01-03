@@ -1,19 +1,30 @@
 package com.creperie.gestion.domain;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.Validate;
 
 import java.util.Map;
 import java.util.Objects;
 
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class CommandeStatistique {
 
+    @JsonProperty("dateDeService")
     private DateDeService dateDeService;
+    @JsonProperty("nombreDeCommandesEnCoursDePrise")
     private Integer nombreDeCommandesEnCoursDePrise;
+    @JsonProperty("nombreDeCommandesFinalisees")
     private Integer nombreDeCommandesFinalisees;
+    @JsonProperty("nombreDeCommandesEnProduction")
     private Integer nombreDeCommandesEnProduction;
+    @JsonProperty("nombreDeCommandeProduite")
     private Integer nombreDeCommandeProduite;
+    @JsonProperty("plats")
     private Map<String, Integer> plats;
 
+    @JsonCreator
     public CommandeStatistique(final DateDeService dateDeService,
                                final Integer nombreDeCommandesEnCoursDePrise,
                                final Integer nombreDeCommandesFinalisees,
@@ -37,17 +48,23 @@ public class CommandeStatistique {
     }
 
     public void nouvelleCommandeFinalisee() {
-        this.nombreDeCommandesEnCoursDePrise--;
+        if (this.nombreDeCommandesEnCoursDePrise > 0) {
+            this.nombreDeCommandesEnCoursDePrise--;
+        }
         this.nombreDeCommandesFinalisees++;
     }
 
     public void nouvelleCommandeEnProduction() {
-        this.nombreDeCommandesFinalisees--;
+        if (this.nombreDeCommandesFinalisees > 0) {
+            this.nombreDeCommandesFinalisees--;
+        }
         this.nombreDeCommandesEnProduction++;
     }
 
     public void nouvelleCommandeProduite() {
-        this.nombreDeCommandesEnProduction--;
+        if (this.nombreDeCommandesEnProduction > 0) {
+            this.nombreDeCommandesEnProduction--;
+        }
         this.nombreDeCommandeProduite++;
     }
 

@@ -61,7 +61,7 @@ public class PostgresFrequentationStatistiqueRepository implements Frequentation
                              WHERE date_de_service = ?
                              """
              )) {
-            ps.setObject(1, dateDeService);
+            ps.setObject(1, dateDeService.localDate());
             try (final ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     final String payload = rs.getString("payload");

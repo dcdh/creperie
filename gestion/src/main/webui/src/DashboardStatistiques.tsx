@@ -15,8 +15,14 @@ import {
 import {getEvents, getStatistiquesCommandes, getStatistiquesFrequentation} from './api/endpoints.ts';
 
 import type {AuditEvent, CommandeStatistique, FrequentationStatistique,} from './api/model';
+import {useSSE} from 'react-hooks-sse';
 
 const DashboardStatistiques: React.FC = () => {
+    const liveEventsNotification = useSSE<AuditEvent | undefined>(
+        "LiveEvents",
+        undefined
+    );
+
     const [events, setEvents] = useState<AuditEvent[]>([]);
     const [commandes, setCommandes] = useState<CommandeStatistique[]>([]);
     const [frequentations, setFrequentations] = useState<FrequentationStatistique[]>([]);
@@ -40,7 +46,10 @@ const DashboardStatistiques: React.FC = () => {
         };
 
         load();
-    }, []);
+        if (liveEventsNotification !== undefined) {
+            load();
+        }
+    }, [liveEventsNotification]);
 
     if (loading) {
         return (

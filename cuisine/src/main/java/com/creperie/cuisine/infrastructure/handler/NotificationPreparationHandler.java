@@ -4,20 +4,28 @@ import com.creperie.cuisine.domain.Plat;
 import com.creperie.cuisine.domain.PreparationIdentifier;
 import com.creperie.cuisine.domain.Production;
 import com.creperie.cuisine.domain.command.ProduireCommande;
-import com.creperie.cuisine.infrastructure.api.NotifyEvent;
 import com.creperie.cuisine.infrastructure.api.ProductionEndpoint;
-import com.damdamdeo.pulse.extension.consumer.runtime.EventChannel;
+import com.damdamdeo.pulse.extension.consumer.runtime.Source;
+import com.damdamdeo.pulse.extension.consumer.runtime.event.AsyncEventConsumerChannel;
 import com.damdamdeo.pulse.extension.core.AggregateId;
 import com.damdamdeo.pulse.extension.core.AggregateRootType;
+import com.damdamdeo.pulse.extension.core.BelongsTo;
 import com.damdamdeo.pulse.extension.core.command.CommandHandler;
-import com.damdamdeo.pulse.extension.core.consumer.*;
+import com.damdamdeo.pulse.extension.core.consumer.CurrentVersionInConsumption;
+import com.damdamdeo.pulse.extension.core.consumer.DecryptablePayload;
+import com.damdamdeo.pulse.extension.core.consumer.FromApplication;
+import com.damdamdeo.pulse.extension.core.consumer.Purpose;
+import com.damdamdeo.pulse.extension.core.consumer.event.AggregateRootLoaded;
+import com.damdamdeo.pulse.extension.core.consumer.event.AsyncEventChannelMessageHandler;
 import com.damdamdeo.pulse.extension.core.encryption.EncryptedPayload;
 import com.damdamdeo.pulse.extension.core.event.EventType;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
+import com.damdamdeo.pulse.extension.core.executedby.ExecutedBy;
+import com.damdamdeo.pulse.extension.livenotifier.runtime.Audience;
+import com.damdamdeo.pulse.extension.livenotifier.runtime.LiveNotifierPublisher;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.Validate;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -30,10 +38,10 @@ import java.util.List;
 import java.util.function.Supplier;
 
 @ApplicationScoped
-@EventChannel(
-        target = "notificationPreparation",
+@AsyncEventConsumerChannel(
+        purpose = "notificationPreparation",
         sources = {
-                @EventChannel.Source(functionalDomain = "Salle", componentName = "priseDeCommande")})
+                @Source(functionalDomain = "Salle", componentName = "priseDeCommande")})
 public class NotificationPreparationHandler implements AsyncEventChannelMessageHandler<JsonNode> {
 
     private LocalDateTime derniereCommandeRecu;
@@ -46,7 +54,10 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
     CommandHandler<Production, PreparationIdentifier> productionCommandeCommandHandler;
 
     @Inject
-    Event<NotifyEvent> notifyEventProducer;
+    LiveNotifierPublisher<MessageDTO> liveNotifierMessageDTOPublisher;
+
+    @Inject
+    LiveNotifierPublisher<CommandeAProduireDTO> liveNotifierCommandeAProduireDTOPublisher;
 
     @Schema(name = "CommandeAProduire", required = true, requiredProperties = {"id", "plats"})
     public record CommandeAProduireDTO(String id, List<ProductionEndpoint.PlatDTO> plats) {
@@ -58,7 +69,7 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
 
     @Override
     public void handleMessage(final FromApplication fromApplication,
-                              final Target target,
+                              final Purpose purpose,
                               final AggregateRootType aggregateRootType,
                               final AggregateId aggregateId,
                               final CurrentVersionInConsumption currentVersionInConsumption,
@@ -66,20 +77,16 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
                               final EventType eventType,
                               final EncryptedPayload encryptedPayload,
                               final OwnedBy ownedBy,
+                              final BelongsTo belongsTo,
+                              final ExecutedBy executedBy,
                               final DecryptablePayload<JsonNode> decryptableEventPayload,
                               final Supplier<AggregateRootLoaded<JsonNode>> aggregateRootLoadedSupplier) {
         Log.infov("Handling message for event type ''{0}''", eventType.type());
         if ("CommandeEnCoursDePrise".equals(eventType.type())
                 && (derniereCommandeRecu == null || derniereCommandeRecu.toLocalDate().isBefore(LocalDate.now()))) {
             Log.infov("Should notify event ''{0}''", eventType.type());
-            notifyEventProducer.fireAsync(new NotifyEvent(PREMIERE_COMMANDE_DU_SERVICE, MessageDTO.class, new MessageDTO("Démarre la crêpière la premiére commande va arriver !")))
-                    .whenComplete((result, throwable) -> {
-                        if (throwable != null) {
-                            Log.warnv("Error firing ''{0}'': {1}", eventType.type(), throwable.getMessage());
-                        } else {
-                            Log.infov("Broadcast firing for event ''{0}''", eventType.type());
-                        }
-                    });
+            liveNotifierMessageDTOPublisher.publish(PREMIERE_COMMANDE_DU_SERVICE, new MessageDTO("Démarre la crêpière la premiére commande va arriver !"),
+                    ownedBy, Audience.AllConnected.INSTANCE);
             derniereCommandeRecu = LocalDateTime.now();
         } else if ("CommandeFinalisee".equals(eventType.type())) {
             AggregateRootLoaded<JsonNode> jsonNodeAggregateRootLoaded = aggregateRootLoadedSupplier.get();
@@ -98,17 +105,11 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
 
                 productionCommandeCommandHandler.handle(new ProduireCommande(preparationIdentifier, plats));
                 Log.infov("Should notify event ''{0}''", eventType.type());
-                notifyEventProducer.fireAsync(new NotifyEvent(COMMANDE_A_PRODUIRE, CommandeAProduireDTO.class,
-                        new CommandeAProduireDTO(
+                liveNotifierCommandeAProduireDTOPublisher.publish(
+                        COMMANDE_A_PRODUIRE, new CommandeAProduireDTO(
                                 preparationIdentifier.id(),
-                                plats.stream().map(ProductionEndpoint.PlatDTO::from).toList())))
-                        .whenComplete((result, throwable) -> {
-                            if (throwable != null) {
-                                Log.warnv("Error firing ''{0}'': {1}", eventType.type(), throwable.getMessage());
-                            } else {
-                                Log.infov("Broadcast firing for event ''{0}''", eventType.type());
-                            }
-                        });
+                                plats.stream().map(ProductionEndpoint.PlatDTO::from).toList()), ownedBy,
+                        Audience.AllConnected.INSTANCE);
             }
         }
     }

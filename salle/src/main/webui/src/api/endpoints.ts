@@ -13,6 +13,13 @@ import type {
 import { customInstance } from "./mutator/custom-instance";
 
 /**
+ * @summary Register
+ */
+export const getNotifierSseStream = () => {
+  return customInstance<void>({ url: `/notifier/sse/stream`, method: "GET" });
+};
+
+/**
  * @summary Commencer La Prise De Commande
  */
 export const postPriseDeCommandeCommencerLaPriseDeCommande = (
@@ -81,13 +88,9 @@ export const postPriseDeCommandeNumeroDeTableFinaliserLaCommande = (
   });
 };
 
-/**
- * @summary Register
- */
-export const getSseStream = () => {
-  return customInstance<void>({ url: `/sse/stream`, method: "GET" });
-};
-
+export type GetNotifierSseStreamResult = NonNullable<
+  Awaited<ReturnType<typeof getNotifierSseStream>>
+>;
 export type PostPriseDeCommandeCommencerLaPriseDeCommandeResult = NonNullable<
   Awaited<ReturnType<typeof postPriseDeCommandeCommencerLaPriseDeCommande>>
 >;
@@ -100,6 +103,3 @@ export type PostPriseDeCommandeNumeroDeTableFinaliserLaCommandeResult =
       ReturnType<typeof postPriseDeCommandeNumeroDeTableFinaliserLaCommande>
     >
   >;
-export type GetSseStreamResult = NonNullable<
-  Awaited<ReturnType<typeof getSseStream>>
->;

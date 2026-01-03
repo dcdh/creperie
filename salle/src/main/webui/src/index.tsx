@@ -11,7 +11,7 @@ const root = ReactDOM.createRoot(
 root.render(
     <React.StrictMode>
         <StyledEngineProvider injectFirst>
-            <SSEProvider endpoint="/sse/stream">
+            <SSEProvider endpoint="/notifier/sse/stream">
                 <PriseDeCommande/>
                 <CuisineNotifications/>
             </SSEProvider>

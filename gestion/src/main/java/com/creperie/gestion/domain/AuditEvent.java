@@ -31,11 +31,3 @@ public record AuditEvent(FromApplication fromApplication,
         Objects.requireNonNull(ownedBy);
     }
 }
-
-FCK je dois finir le dahsboard:
-utiliser de meilleurs representation:
-card + partie de droite
-rajouter le SSE
-
-ensuite finir la notification côté extension puis reprendre ...
-creer un module notification expres ...

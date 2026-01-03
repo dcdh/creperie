@@ -3,17 +3,25 @@ package com.creperie.gestion.infrastructure.handler;
 import com.creperie.gestion.domain.*;
 import com.creperie.gestion.infrastructure.api.AuditEventDTO;
 import com.creperie.gestion.infrastructure.api.AuditEventDTOMapper;
-import com.creperie.gestion.infrastructure.api.NotifyEvent;
-import com.damdamdeo.pulse.extension.consumer.runtime.EventChannel;
+import com.damdamdeo.pulse.extension.consumer.runtime.Source;
+import com.damdamdeo.pulse.extension.consumer.runtime.event.AsyncEventConsumerChannel;
 import com.damdamdeo.pulse.extension.core.AggregateId;
 import com.damdamdeo.pulse.extension.core.AggregateRootType;
-import com.damdamdeo.pulse.extension.core.consumer.*;
+import com.damdamdeo.pulse.extension.core.BelongsTo;
+import com.damdamdeo.pulse.extension.core.consumer.CurrentVersionInConsumption;
+import com.damdamdeo.pulse.extension.core.consumer.DecryptablePayload;
+import com.damdamdeo.pulse.extension.core.consumer.FromApplication;
+import com.damdamdeo.pulse.extension.core.consumer.Purpose;
+import com.damdamdeo.pulse.extension.core.consumer.event.AggregateRootLoaded;
+import com.damdamdeo.pulse.extension.core.consumer.event.AsyncEventChannelMessageHandler;
 import com.damdamdeo.pulse.extension.core.encryption.EncryptedPayload;
 import com.damdamdeo.pulse.extension.core.event.EventType;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
+import com.damdamdeo.pulse.extension.core.executedby.ExecutedBy;
+import com.damdamdeo.pulse.extension.livenotifier.runtime.Audience;
+import com.damdamdeo.pulse.extension.livenotifier.runtime.LiveNotifierPublisher;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.Validate;
 
@@ -23,15 +31,15 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @ApplicationScoped
-@EventChannel(
-        target = "aggregator",
+@AsyncEventConsumerChannel(
+        purpose = "aggregator",
         sources = {
-                @EventChannel.Source(functionalDomain = "Salle", componentName = "priseDeCommande"),
-                @EventChannel.Source(functionalDomain = "Cuisine", componentName = "Production")})
+                @Source(functionalDomain = "Salle", componentName = "priseDeCommande"),
+                @Source(functionalDomain = "Cuisine", componentName = "Production")})
 public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode> {
 
     @Inject
-    Event<NotifyEvent> notifyEventProducer;
+    LiveNotifierPublisher<AuditEventDTO> liveNotifierAuditEventDTOPublisherProducer;
 
     @Inject
     AuditEventRepository auditEventRepository;
@@ -45,9 +53,23 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
     @Inject
     AuditEventDTOMapper auditEventDTOMapper;
 
+    private void applyForCommandeStatistique(final DateDeService dateDeService, Consumer<CommandeStatistique> consumer) {
+        final CommandeStatistique byDateDeService = commandeStatistiqueRepository.findByDateDeService(dateDeService)
+                .orElse(new CommandeStatistique(dateDeService, 0, 0, 0, 0, new HashMap<>()));
+        consumer.accept(byDateDeService);
+        commandeStatistiqueRepository.persist(byDateDeService);
+    }
+
+    private void applyForFrequentationStatistique(final DateDeService dateDeService, Consumer<FrequentationStatistique> consumer) {
+        final FrequentationStatistique byDateDeService = frequentationStatistiqueRepository.findByDateDeService(dateDeService)
+                .orElse(new FrequentationStatistique(dateDeService, 0));
+        consumer.accept(byDateDeService);
+        frequentationStatistiqueRepository.persist(byDateDeService);
+    }
+
     @Override
     public void handleMessage(final FromApplication fromApplication,
-                              final Target target,
+                              final Purpose purpose,
                               final AggregateRootType aggregateRootType,
                               final AggregateId aggregateId,
                               final CurrentVersionInConsumption currentVersionInConsumption,
@@ -55,6 +77,8 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final EventType eventType,
                               final EncryptedPayload encryptedPayload,
                               final OwnedBy ownedBy,
+                              final BelongsTo belongsTo,
+                              final ExecutedBy executedBy,
                               final DecryptablePayload<JsonNode> decryptableEventPayload,
                               final Supplier<AggregateRootLoaded<JsonNode>> aggregateRootLoadedSupplier) {
         if (decryptableEventPayload.isDecrypted()) {
@@ -105,21 +129,8 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                 default:
                     throw new IllegalStateException("Unknown functionalDomain %s".formatted(fromApplication.functionalDomain()));
             }
-            notifyEventProducer.fireAsync(new NotifyEvent("LiveEvents", AuditEventDTO.class, auditEventDTOMapper.mapFrom(auditEvent)));
+            liveNotifierAuditEventDTOPublisherProducer.publish(
+                    "LiveEvents", auditEventDTOMapper.mapFrom(auditEvent), ownedBy, Audience.AllConnected.INSTANCE);
         }
-    }
-
-    private void applyForCommandeStatistique(final DateDeService dateDeService, Consumer<CommandeStatistique> consumer) {
-        final CommandeStatistique byDateDeService = commandeStatistiqueRepository.findByDateDeService(dateDeService)
-                .orElse(new CommandeStatistique(dateDeService, 0, 0, 0, 0, new HashMap<>()));
-        consumer.accept(byDateDeService);
-        commandeStatistiqueRepository.persist(byDateDeService);
-    }
-
-    private void applyForFrequentationStatistique(final DateDeService dateDeService, Consumer<FrequentationStatistique> consumer) {
-        final FrequentationStatistique byDateDeService = frequentationStatistiqueRepository.findByDateDeService(dateDeService)
-                .orElse(new FrequentationStatistique(dateDeService, 0));
-        consumer.accept(byDateDeService);
-        frequentationStatistiqueRepository.persist(byDateDeService);
     }
 }

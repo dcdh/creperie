@@ -4,11 +4,11 @@
  * gestion_statistics API
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
-import type { Instant } from "./instant";
+import type { ZonedDateTime } from "./zonedDateTime";
 
 export interface AuditEvent {
   functionalDomain: string;
-  creationDate: Instant;
+  creationDate: ZonedDateTime;
   eventType: string;
   message: string;
 }

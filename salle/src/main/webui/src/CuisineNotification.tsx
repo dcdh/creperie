@@ -15,7 +15,7 @@ export function CuisineNotifications() {
 
     useEffect(() => {
         if (cuisineNotification !== undefined) {
-            setMessage(`La commande pour la table ${cuisineNotification.numeroDeTable} est prête !`);
+            setMessage(`La commande pour la table ${cuisineNotification.numeroDeTable} est prête à être servi !`);
             setOpen(true);
         }
     }, [cuisineNotification]);

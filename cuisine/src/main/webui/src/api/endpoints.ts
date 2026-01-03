@@ -12,6 +12,13 @@ import type {
 import { customInstance } from "./mutator/custom-instance";
 
 /**
+ * @summary Register
+ */
+export const getNotifierSseStream = () => {
+  return customInstance<void>({ url: `/notifier/sse/stream`, method: "GET" });
+};
+
+/**
  * @summary Mark Production Terminee
  */
 export const postProductionMarkProductionTerminee = (
@@ -30,16 +37,9 @@ export const postProductionMarkProductionTerminee = (
   });
 };
 
-/**
- * @summary Stream Events
- */
-export const getSseStream = () => {
-  return customInstance<void>({ url: `/sse/stream`, method: "GET" });
-};
-
+export type GetNotifierSseStreamResult = NonNullable<
+  Awaited<ReturnType<typeof getNotifierSseStream>>
+>;
 export type PostProductionMarkProductionTermineeResult = NonNullable<
   Awaited<ReturnType<typeof postProductionMarkProductionTerminee>>
->;
-export type GetSseStreamResult = NonNullable<
-  Awaited<ReturnType<typeof getSseStream>>
 >;
