@@ -46,9 +46,9 @@ services:
     - '9092'
     - '29092'
     environment:
-    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
     - NODE_ID=1
     - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
     healthcheck:
       retries: 5
       interval: 10s

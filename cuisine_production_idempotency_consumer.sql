@@ -1,13 +1,13 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 CREATE SCHEMA IF NOT EXISTS cuisine_production;
 
-CREATE TABLE IF NOT EXISTS cuisine_production.t_idempotency (
+CREATE TABLE IF NOT EXISTS cuisine_production.idempotency (
   purpose character varying(255) not null,
   from_application character varying(255) not null,
-  topic character varying(255) not null,
+  table_name character varying(255) not null,
   aggregate_root_type character varying(255) not null,
   aggregate_root_id character varying(255) not null,
   last_consumed_version bigint not null,
-  CONSTRAINT idempotency_pkey PRIMARY KEY (purpose, from_application, topic, aggregate_root_type, aggregate_root_id),
-  CONSTRAINT topic_format_chk CHECK (topic = 'EVENT' OR topic = 'AGGREGATE_ROOT')
+  CONSTRAINT idempotency_pkey PRIMARY KEY (purpose, from_application, table_name, aggregate_root_type, aggregate_root_id),
+  CONSTRAINT table_name_format_chk CHECK (table_name = 'EVENT' OR table_name = 'AGGREGATE_ROOT')
 )

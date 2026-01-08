@@ -1,41 +1,4 @@
 services:
-  postgres:
-    image: postgres:17.6-alpine3.22
-    labels:
-      io.quarkus.devservices.compose.wait_for.logs: .*database system is ready to
-        accept connections.*
-    restart: always
-    ports:
-    - '5432'
-    environment:
-    - POSTGRES_PASSWORD=quarkus
-    - POSTGRES_USER=quarkus
-    - POSTGRES_DB=quarkus
-    command:
-    - postgres
-    - -c
-    - wal_level=logical
-    - -c
-    - hot_standby=on
-    - -c
-    - max_wal_senders=10
-    - -c
-    - max_replication_slots=10
-    - -c
-    - synchronized_standby_slots=replication_slot
-    healthcheck:
-      timeout: 5s
-      start_period: 10s
-      interval: 10s
-      retries: 5
-      test: [
-        CMD,
-        pg_isready
-      ]
-      
-    volumes:
-    - ./cuisine_production_writer.sql:/docker-entrypoint-initdb.d/cuisine_production_writer.sql:ro,z
-    - ./cuisine_production_idempotency_consumer.sql:/docker-entrypoint-initdb.d/cuisine_production_idempotency_consumer.sql:ro,z
   kafka:
     image: debezium-for-dev-service/kafka:3.3.1.Final
     labels:
@@ -45,14 +8,12 @@ services:
     - '9092'
     - '29092'
     environment:
-    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
-    - NODE_ID=1
     - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    - NODE_ID=1
+    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
     healthcheck:
-      timeout: 5s
       start_period: 10s
-      interval: 10s
-      retries: 5
+      timeout: 5s
       test: [
         CMD,
         ./bin/kafka-topics.sh,
@@ -60,7 +21,8 @@ services:
         'kafka:29092',
         --list
       ]
-      
+      retries: 5
+      interval: 10s
     depends_on:
     - postgres
   connect:
@@ -74,24 +36,59 @@ services:
     - kafka
     - postgres
     environment:
-    - BOOTSTRAP_SERVERS=kafka:29092
-    - STATUS_STORAGE_TOPIC=my_connect_statuses
-    - OFFSET_STORAGE_TOPIC=my_connect_offsets
-    - GROUP_ID=1
-    - CONFIG_STORAGE_TOPIC=my_connect_configs
     - LOG_LEVEL=TRACE
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - GROUP_ID=1
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - BOOTSTRAP_SERVERS=kafka:29092
     healthcheck:
-      timeout: 5s
       start_period: 10s
-      interval: 10s
-      retries: 30
+      timeout: 5s
       test: [
         CMD,
         curl,
         -f,
         'http://localhost:8083/connectors'
       ]
-      
+      retries: 30
+      interval: 10s
     depends_on:
     - postgres
     - kafka
+  postgres:
+    image: postgres:17.6-alpine3.22
+    labels:
+      io.quarkus.devservices.compose.wait_for.logs: .*database system is ready to
+        accept connections.*
+    restart: always
+    ports:
+    - '5432'
+    environment:
+    - POSTGRES_PASSWORD=quarkus
+    - POSTGRES_DB=quarkus
+    - POSTGRES_USER=quarkus
+    command:
+    - postgres
+    - -c
+    - wal_level=logical
+    - -c
+    - hot_standby=on
+    - -c
+    - max_wal_senders=10
+    - -c
+    - max_replication_slots=10
+    - -c
+    - synchronized_standby_slots=replication_slot
+    healthcheck:
+      start_period: 10s
+      timeout: 5s
+      test: [
+        CMD,
+        pg_isready
+      ]
+      retries: 5
+      interval: 10s
+    volumes:
+    - ./cuisine_production_writer.sql:/docker-entrypoint-initdb.d/cuisine_production_writer.sql:ro,z
+    - ./cuisine_production_idempotency_consumer.sql:/docker-entrypoint-initdb.d/cuisine_production_idempotency_consumer.sql:ro,z

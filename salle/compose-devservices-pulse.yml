@@ -1,61 +1,4 @@
 services:
-  kafka:
-    image: debezium-for-dev-service/kafka:3.3.1.Final
-    labels:
-      io.quarkus.devservices.compose.exposed_ports: /tmp/ports
-    restart: always
-    ports:
-    - '9092'
-    - '29092'
-    environment:
-    - NODE_ID=1
-    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
-    healthcheck:
-      test: [
-        CMD,
-        ./bin/kafka-topics.sh,
-        --bootstrap-server,
-        'kafka:29092',
-        --list
-      ]
-      timeout: 5s
-      start_period: 10s
-      interval: 10s
-      retries: 5
-    depends_on:
-    - postgres
-  connect:
-    image: quay.io/debezium/connect:3.3.1.Final
-    labels:
-      io.quarkus.devservices.compose.config_map.port.8083: pulse.debezium.connect.port
-    restart: always
-    ports:
-    - '8083'
-    links:
-    - kafka
-    - postgres
-    environment:
-    - OFFSET_STORAGE_TOPIC=my_connect_offsets
-    - GROUP_ID=1
-    - CONFIG_STORAGE_TOPIC=my_connect_configs
-    - LOG_LEVEL=TRACE
-    - BOOTSTRAP_SERVERS=kafka:29092
-    - STATUS_STORAGE_TOPIC=my_connect_statuses
-    healthcheck:
-      test: [
-        CMD,
-        curl,
-        -f,
-        'http://localhost:8083/connectors'
-      ]
-      timeout: 5s
-      start_period: 10s
-      interval: 10s
-      retries: 30
-    depends_on:
-    - postgres
-    - kafka
   postgres:
     image: postgres:17.6-alpine3.22
     labels:
@@ -65,8 +8,8 @@ services:
     ports:
     - '5432'
     environment:
-    - POSTGRES_DB=quarkus
     - POSTGRES_PASSWORD=quarkus
+    - POSTGRES_DB=quarkus
     - POSTGRES_USER=quarkus
     command:
     - postgres
@@ -81,14 +24,71 @@ services:
     - -c
     - synchronized_standby_slots=replication_slot
     healthcheck:
+      interval: 10s
+      start_period: 10s
+      timeout: 5s
       test: [
         CMD,
         pg_isready
       ]
-      timeout: 5s
-      start_period: 10s
-      interval: 10s
       retries: 5
     volumes:
     - ./salle_prisedecommande_writer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_writer.sql:ro,z
     - ./salle_prisedecommande_idempotency_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_idempotency_consumer.sql:ro,z
+  kafka:
+    image: debezium-for-dev-service/kafka:3.3.1.Final
+    labels:
+      io.quarkus.devservices.compose.exposed_ports: /tmp/ports
+    restart: always
+    ports:
+    - '9092'
+    - '29092'
+    environment:
+    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    - NODE_ID=1
+    healthcheck:
+      interval: 10s
+      start_period: 10s
+      timeout: 5s
+      test: [
+        CMD,
+        ./bin/kafka-topics.sh,
+        --bootstrap-server,
+        'kafka:29092',
+        --list
+      ]
+      retries: 5
+    depends_on:
+    - postgres
+  connect:
+    image: quay.io/debezium/connect:3.3.1.Final
+    labels:
+      io.quarkus.devservices.compose.config_map.port.8083: pulse.debezium.connect.port
+    restart: always
+    ports:
+    - '8083'
+    links:
+    - kafka
+    - postgres
+    environment:
+    - LOG_LEVEL=TRACE
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - GROUP_ID=1
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - BOOTSTRAP_SERVERS=kafka:29092
+    healthcheck:
+      interval: 10s
+      start_period: 10s
+      timeout: 5s
+      test: [
+        CMD,
+        curl,
+        -f,
+        'http://localhost:8083/connectors'
+      ]
+      retries: 30
+    depends_on:
+    - postgres
+    - kafka
