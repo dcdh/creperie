@@ -8,9 +8,9 @@ services:
     ports:
     - '5432'
     environment:
+    - POSTGRES_DB=quarkus
     - POSTGRES_USER=quarkus
     - POSTGRES_PASSWORD=quarkus
-    - POSTGRES_DB=quarkus
     command:
     - postgres
     - -c
@@ -24,19 +24,14 @@ services:
     - -c
     - synchronized_standby_slots=replication_slot
     healthcheck:
-      retries: 5
-      interval: 10s
-      start_period: 10s
-      timeout: 5s
       test: [
         CMD,
         pg_isready
       ]
-      
-    volumes:
-    - ./gestion_statistics_idempotency_consumer.sql:/docker-entrypoint-initdb.d/gestion_statistics_idempotency_consumer.sql:ro,z
-    - ./salle_prisedecommande_target_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_target_consumer.sql:ro,z
-    - ./cuisine_production_target_consumer.sql:/docker-entrypoint-initdb.d/cuisine_production_target_consumer.sql:ro,z
+      retries: 5
+      interval: 10s
+      start_period: 10s
+      timeout: 5s
   kafka:
     image: debezium-for-dev-service/kafka:3.3.1.Final
     labels:
@@ -46,14 +41,10 @@ services:
     - '9092'
     - '29092'
     environment:
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
     - NODE_ID=1
     - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
-    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
     healthcheck:
-      retries: 5
-      interval: 10s
-      start_period: 10s
-      timeout: 5s
       test: [
         CMD,
         ./bin/kafka-topics.sh,
@@ -61,6 +52,9 @@ services:
         'kafka:29092',
         --list
       ]
-      
+      retries: 5
+      interval: 10s
+      start_period: 10s
+      timeout: 5s
     depends_on:
     - postgres
