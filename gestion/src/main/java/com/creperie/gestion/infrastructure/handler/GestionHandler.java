@@ -25,7 +25,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.Validate;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -73,7 +73,7 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final AggregateRootType aggregateRootType,
                               final AggregateId aggregateId,
                               final CurrentVersionInConsumption currentVersionInConsumption,
-                              final Instant creationDate,
+                              final ZonedDateTime storedAt,
                               final EventType eventType,
                               final EncryptedPayload encryptedPayload,
                               final OwnedBy ownedBy,
@@ -83,10 +83,10 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final Supplier<AggregateRootLoaded<JsonNode>> aggregateRootLoadedSupplier) {
         if (decryptableEventPayload.isDecrypted()) {
             final AuditEvent auditEvent = new AuditEvent(
-                    fromApplication, aggregateRootType, aggregateId, currentVersionInConsumption, creationDate,
+                    fromApplication, aggregateRootType, aggregateId, currentVersionInConsumption, storedAt.toInstant(),
                     eventType, encryptedPayload, ownedBy);
             auditEventRepository.store(auditEvent);
-            final DateDeService dateDeService = DateDeService.from(creationDate);
+            final DateDeService dateDeService = DateDeService.from(storedAt.toInstant());
             switch (fromApplication.functionalDomain()) {
                 case "Salle":
                     switch (eventType.type()) {

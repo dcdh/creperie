@@ -4,14 +4,15 @@
  * salle_priseDeCommande API
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
-import type { CommandeId } from "./commandeId";
-import type { NombreDeConvives } from "./nombreDeConvives";
+import type { Instant } from "./instant";
 import type { Plat } from "./plat";
 import type { Status } from "./status";
 
 export interface Commande {
-  commandeId: CommandeId;
-  nombreDeConvives: NombreDeConvives;
+  commandeIdentifier: string;
+  numeroDeTable: number;
+  nombreDeConvives: number;
+  datePriseDeCommande: Instant;
   plats: Plat[];
   status: Status;
 }

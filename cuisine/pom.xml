@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>cuisine</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <packaging>quarkus</packaging>
 
     <dependencies>
         <dependency>
@@ -82,10 +82,13 @@
             <groupId>com.damdamdeo.pulse</groupId>
             <artifactId>quarkus-pulse-live-notifier-extension</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>io.quarkiverse.vault</groupId>
+            <artifactId>quarkus-vault</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
+            <artifactId>quarkus-junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -100,7 +103,6 @@
             <plugin>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus.platform.version}</version>
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -111,11 +113,9 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>com.github.eirslett</groupId>

@@ -9,8 +9,8 @@ services:
     - '5432'
     environment:
     - POSTGRES_DB=quarkus
-    - POSTGRES_USER=quarkus
     - POSTGRES_PASSWORD=quarkus
+    - POSTGRES_USER=quarkus
     command:
     - postgres
     - -c
@@ -28,12 +28,16 @@ services:
         CMD,
         pg_isready
       ]
-      retries: 5
-      interval: 10s
-      start_period: 10s
       timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 5
+    volumes:
+    - ./salle_prisedecommande_target_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_target_consumer.sql:ro,z
+    - ./cuisine_production_target_consumer.sql:/docker-entrypoint-initdb.d/cuisine_production_target_consumer.sql:ro,z
+    - ./gestion_statistics_idempotency_consumer.sql:/docker-entrypoint-initdb.d/gestion_statistics_idempotency_consumer.sql:ro,z
   kafka:
-    image: debezium-for-dev-service/kafka:3.3.1.Final
+    image: debezium-for-dev-service/kafka:4.2.0
     labels:
       io.quarkus.devservices.compose.exposed_ports: /tmp/ports
     restart: always
@@ -42,19 +46,54 @@ services:
     - '29092'
     environment:
     - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-    - NODE_ID=1
     - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
+    - NODE_ID=1
+    depends_on:
+    - postgres
+  openbao:
+    image: openbao/openbao:2.5.4
+    labels:
+      io.quarkus.devservices.compose.wait_for.logs: .*OpenBao server started!.*
+    restart: always
+    ports:
+    - '8200'
+    environment:
+    - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    - BAO_DEV_ROOT_TOKEN_ID=my-root-token
+    command:
+    - server
+    - -dev
+    - -dev-no-store-token
     healthcheck:
       test: [
         CMD,
-        ./bin/kafka-topics.sh,
-        --bootstrap-server,
-        'kafka:29092',
-        --list
+        wget,
+        --no-verbose,
+        --tries=1,
+        --spider,
+        'http://127.0.0.0:8200'
       ]
-      retries: 5
-      interval: 10s
-      start_period: 10s
       timeout: 5s
+      start_period: 5s
+      interval: 10s
+      retries: 3
+  openbao-init:
+    image: openbao/openbao:2.5.4
+    labels:
+      io.quarkus.devservices.compose.wait_for.logs: .*Success! Uploaded policy.*
+    restart: 'no'
+    links:
+    - openbao
+    environment:
+    - BAO_TOKEN=my-root-token
+    - BAO_ADDR=http://openbao:8200
+    entrypoint: [
+      sh,
+      -c,
+      sleep 10;bao policy write pulse-app-policy /tmp/pulse-policy-policy.hcl;bao
+        auth enable userpass;bao write auth/userpass/users/bob password=sinclair policies=pulse-app-policy
+    ]
+    volumes:
+    - ./pulse-policy-policy.hcl:/tmp/pulse-policy-policy.hcl:ro,z
     depends_on:
-    - postgres
+    - openbao

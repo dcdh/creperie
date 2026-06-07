@@ -5,8 +5,8 @@
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
 import type {
+  PostPriseDeCommandeCommandIdentifierAjouterPlatBody,
   PostPriseDeCommandeCommencerLaPriseDeCommandeBody,
-  PostPriseDeCommandeNumeroDeTableAjouterPlatBody,
   Response,
 } from "./model";
 
@@ -56,20 +56,20 @@ export const postPriseDeCommandeCommencerLaPriseDeCommande = (
 /**
  * @summary Ajouter Plat
  */
-export const postPriseDeCommandeNumeroDeTableAjouterPlat = (
-  numeroDeTable: number,
-  postPriseDeCommandeNumeroDeTableAjouterPlatBody: PostPriseDeCommandeNumeroDeTableAjouterPlatBody,
+export const postPriseDeCommandeCommandIdentifierAjouterPlat = (
+  commandIdentifier: string,
+  postPriseDeCommandeCommandIdentifierAjouterPlatBody: PostPriseDeCommandeCommandIdentifierAjouterPlatBody,
 ) => {
   const formUrlEncoded = new URLSearchParams();
-  if (postPriseDeCommandeNumeroDeTableAjouterPlatBody.nom !== undefined) {
+  if (postPriseDeCommandeCommandIdentifierAjouterPlatBody.nom !== undefined) {
     formUrlEncoded.append(
       `nom`,
-      postPriseDeCommandeNumeroDeTableAjouterPlatBody.nom,
+      postPriseDeCommandeCommandIdentifierAjouterPlatBody.nom,
     );
   }
 
   return customInstance<Response>({
-    url: `/priseDeCommande/${numeroDeTable}/ajouterPlat`,
+    url: `/priseDeCommande/${commandIdentifier}/ajouterPlat`,
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     data: formUrlEncoded,
@@ -79,11 +79,11 @@ export const postPriseDeCommandeNumeroDeTableAjouterPlat = (
 /**
  * @summary Finaliser La Commande
  */
-export const postPriseDeCommandeNumeroDeTableFinaliserLaCommande = (
-  numeroDeTable: number,
+export const postPriseDeCommandeCommandIdentifierFinaliserLaCommande = (
+  commandIdentifier: string,
 ) => {
   return customInstance<Response>({
-    url: `/priseDeCommande/${numeroDeTable}/finaliserLaCommande`,
+    url: `/priseDeCommande/${commandIdentifier}/finaliserLaCommande`,
     method: "POST",
   });
 };
@@ -94,12 +94,12 @@ export type GetNotifierSseStreamResult = NonNullable<
 export type PostPriseDeCommandeCommencerLaPriseDeCommandeResult = NonNullable<
   Awaited<ReturnType<typeof postPriseDeCommandeCommencerLaPriseDeCommande>>
 >;
-export type PostPriseDeCommandeNumeroDeTableAjouterPlatResult = NonNullable<
-  Awaited<ReturnType<typeof postPriseDeCommandeNumeroDeTableAjouterPlat>>
+export type PostPriseDeCommandeCommandIdentifierAjouterPlatResult = NonNullable<
+  Awaited<ReturnType<typeof postPriseDeCommandeCommandIdentifierAjouterPlat>>
 >;
-export type PostPriseDeCommandeNumeroDeTableFinaliserLaCommandeResult =
+export type PostPriseDeCommandeCommandIdentifierFinaliserLaCommandeResult =
   NonNullable<
     Awaited<
-      ReturnType<typeof postPriseDeCommandeNumeroDeTableFinaliserLaCommande>
+      ReturnType<typeof postPriseDeCommandeCommandIdentifierFinaliserLaCommande>
     >
   >;

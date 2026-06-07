@@ -1,12 +1,13 @@
 package com.creperie.cuisine.domain.event;
 
 import com.creperie.cuisine.domain.Plat;
+import com.creperie.cuisine.domain.PreparationIdentifier;
 import com.damdamdeo.pulse.extension.core.event.Event;
 
 import java.util.List;
 import java.util.Objects;
 
-public record CommandeAProduire(List<Plat> plats) implements Event {
+public record CommandeAProduire(List<Plat> plats) implements Event<PreparationIdentifier> {
 
     public CommandeAProduire {
         Objects.requireNonNull(plats);

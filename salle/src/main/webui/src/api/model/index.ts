@@ -7,6 +7,7 @@
 
 export * from "./commande";
 export * from "./commandeId";
+export * from "./commandeIdentifier";
 export * from "./commandePretePourEtreServie";
 export * from "./datePriseDeCommande";
 export * from "./event";
@@ -17,12 +18,18 @@ export * from "./event2Type";
 export * from "./event3";
 export * from "./eventDTO";
 export * from "./eventType";
+export * from "./httpProblem";
+export * from "./httpValidationProblem";
 export * from "./instant";
 export * from "./nombreDeConvives";
 export * from "./numeroDeTable";
+export * from "./numeroDeTable1";
 export * from "./plat";
+export * from "./postPriseDeCommandeCommandIdentifierAjouterPlatBody";
 export * from "./postPriseDeCommandeCommencerLaPriseDeCommandeBody";
 export * from "./postPriseDeCommandeNumeroDeTableAjouterPlatBody";
 export * from "./postPriseDeCommandeNumeroDeTableDatePriseDeCommandeAjouterPlatBody";
 export * from "./response";
+export * from "./sequenceNumber";
 export * from "./status";
+export * from "./violation";

@@ -4,6 +4,7 @@ import com.creperie.gestion.domain.AuditEvent;
 import com.damdamdeo.pulse.extension.common.runtime.encryption.OpenPGPDecryptionService;
 import com.damdamdeo.pulse.extension.core.encryption.DecryptedPayload;
 import com.damdamdeo.pulse.extension.core.encryption.DecryptionException;
+import com.damdamdeo.pulse.extension.core.encryption.UnableToRetrievePassphraseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -71,7 +72,7 @@ public class AuditEventDTOMapper {
         } catch (final DecryptionException e) {
             // can be the case
             return null;
-        } catch (final IOException e) {
+        } catch (final UnableToRetrievePassphraseException | IOException e) {
             throw new RuntimeException(e);
         }
     }

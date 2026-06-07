@@ -1,4 +1,50 @@
 services:
+  kafka:
+    image: debezium-for-dev-service/kafka:4.2.0
+    labels:
+      io.quarkus.devservices.compose.exposed_ports: /tmp/ports
+    restart: always
+    ports:
+    - '9092'
+    - '29092'
+    environment:
+    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
+    - NODE_ID=1
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    depends_on:
+    - postgres
+  connect:
+    image: quay.io/debezium/connect:3.5.0.Final
+    labels:
+      io.quarkus.devservices.compose.config_map.port.8083: pulse.debezium.connect.port
+    restart: always
+    ports:
+    - '8083'
+    links:
+    - kafka
+    - postgres
+    environment:
+    - BOOTSTRAP_SERVERS=kafka:29092
+    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - GROUP_ID=1
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - LOG_LEVEL=INFO
+    healthcheck:
+      timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 30
+      test: [
+        CMD,
+        curl,
+        -f,
+        'http://localhost:8083/connectors'
+      ]
+      
+    depends_on:
+    - postgres
+    - kafka
   postgres:
     image: postgres:17.6-alpine3.22
     labels:
@@ -33,62 +79,56 @@ services:
         pg_isready
       ]
       
-  kafka:
-    image: debezium-for-dev-service/kafka:3.3.1.Final
+    volumes:
+    - ./cuisine_production_sequences.sql:/docker-entrypoint-initdb.d/cuisine_production_sequences.sql:ro,z
+    - ./cuisine_production_sequences_table.sql:/docker-entrypoint-initdb.d/cuisine_production_sequences_table.sql:ro,z
+    - ./cuisine_production_aggregates.sql:/docker-entrypoint-initdb.d/cuisine_production_aggregates.sql:ro,z
+    - ./cuisine_production_idempotency_consumer.sql:/docker-entrypoint-initdb.d/cuisine_production_idempotency_consumer.sql:ro,z
+  openbao:
+    image: openbao/openbao:2.5.4
     labels:
-      io.quarkus.devservices.compose.exposed_ports: /tmp/ports
+      io.quarkus.devservices.compose.wait_for.logs: .*OpenBao server started!.*
     restart: always
     ports:
-    - '9092'
-    - '29092'
+    - '8200'
     environment:
-    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
-    - NODE_ID=1
-    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    - BAO_DEV_ROOT_TOKEN_ID=my-root-token
+    - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    command:
+    - server
+    - -dev
+    - -dev-no-store-token
     healthcheck:
       timeout: 5s
-      start_period: 10s
+      start_period: 5s
       interval: 10s
-      retries: 5
+      retries: 3
       test: [
         CMD,
-        ./bin/kafka-topics.sh,
-        --bootstrap-server,
-        'kafka:29092',
-        --list
+        wget,
+        --no-verbose,
+        --tries=1,
+        --spider,
+        'http://127.0.0.0:8200'
       ]
       
-    depends_on:
-    - postgres
-  connect:
-    image: quay.io/debezium/connect:3.3.1.Final
+  openbao-init:
+    image: openbao/openbao:2.5.4
     labels:
-      io.quarkus.devservices.compose.config_map.port.8083: pulse.debezium.connect.port
-    restart: always
-    ports:
-    - '8083'
+      io.quarkus.devservices.compose.wait_for.logs: .*Success! Uploaded policy.*
+    restart: 'no'
     links:
-    - kafka
-    - postgres
+    - openbao
     environment:
-    - BOOTSTRAP_SERVERS=kafka:29092
-    - STATUS_STORAGE_TOPIC=my_connect_statuses
-    - OFFSET_STORAGE_TOPIC=my_connect_offsets
-    - GROUP_ID=1
-    - CONFIG_STORAGE_TOPIC=my_connect_configs
-    - LOG_LEVEL=TRACE
-    healthcheck:
-      timeout: 5s
-      start_period: 10s
-      interval: 10s
-      retries: 30
-      test: [
-        CMD,
-        curl,
-        -f,
-        'http://localhost:8083/connectors'
-      ]
-      
+    - BAO_ADDR=http://openbao:8200
+    - BAO_TOKEN=my-root-token
+    entrypoint: [
+      sh,
+      -c,
+      sleep 10;bao policy write pulse-app-policy /tmp/pulse-policy-policy.hcl;bao
+        auth enable userpass;bao write auth/userpass/users/bob password=sinclair policies=pulse-app-policy
+    ]
+    volumes:
+    - ./pulse-policy-policy.hcl:/tmp/pulse-policy-policy.hcl:ro,z
     depends_on:
-    - postgres
-    - kafka
+    - openbao

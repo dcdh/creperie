@@ -1,4 +1,49 @@
 services:
+  kafka:
+    image: debezium-for-dev-service/kafka:4.2.0
+    labels:
+      io.quarkus.devservices.compose.exposed_ports: /tmp/ports
+    restart: always
+    ports:
+    - '9092'
+    - '29092'
+    environment:
+    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    - NODE_ID=1
+    depends_on:
+    - postgres
+  connect:
+    image: quay.io/debezium/connect:3.5.0.Final
+    labels:
+      io.quarkus.devservices.compose.config_map.port.8083: pulse.debezium.connect.port
+    restart: always
+    ports:
+    - '8083'
+    links:
+    - kafka
+    - postgres
+    environment:
+    - LOG_LEVEL=INFO
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - GROUP_ID=1
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - BOOTSTRAP_SERVERS=kafka:29092
+    healthcheck:
+      start_period: 10s
+      timeout: 5s
+      test: [
+        CMD,
+        curl,
+        -f,
+        'http://localhost:8083/connectors'
+      ]
+      retries: 30
+      interval: 10s
+    depends_on:
+    - postgres
+    - kafka
   postgres:
     image: postgres:17.6-alpine3.22
     labels:
@@ -8,9 +53,9 @@ services:
     ports:
     - '5432'
     environment:
-    - POSTGRES_USER=quarkus
     - POSTGRES_PASSWORD=quarkus
     - POSTGRES_DB=quarkus
+    - POSTGRES_USER=quarkus
     command:
     - postgres
     - -c
@@ -24,71 +69,63 @@ services:
     - -c
     - synchronized_standby_slots=replication_slot
     healthcheck:
-      retries: 5
-      interval: 10s
       start_period: 10s
       timeout: 5s
       test: [
         CMD,
         pg_isready
       ]
-      
-  kafka:
-    image: debezium-for-dev-service/kafka:3.3.1.Final
-    labels:
-      io.quarkus.devservices.compose.exposed_ports: /tmp/ports
-    restart: always
-    ports:
-    - '9092'
-    - '29092'
-    environment:
-    - NODE_ID=1
-    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
-    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-    healthcheck:
       retries: 5
       interval: 10s
-      start_period: 10s
-      timeout: 5s
-      test: [
-        CMD,
-        ./bin/kafka-topics.sh,
-        --bootstrap-server,
-        'kafka:29092',
-        --list
-      ]
-      
-    depends_on:
-    - postgres
-  connect:
-    image: quay.io/debezium/connect:3.3.1.Final
+    volumes:
+    - ./salle_prisedecommande_sequences.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences.sql:ro,z
+    - ./salle_prisedecommande_sequences_table.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences_table.sql:ro,z
+    - ./salle_prisedecommande_aggregates.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_aggregates.sql:ro,z
+    - ./salle_prisedecommande_idempotency_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_idempotency_consumer.sql:ro,z
+  openbao:
+    image: openbao/openbao:2.5.4
     labels:
-      io.quarkus.devservices.compose.config_map.port.8083: pulse.debezium.connect.port
+      io.quarkus.devservices.compose.wait_for.logs: .*OpenBao server started!.*
     restart: always
     ports:
-    - '8083'
-    links:
-    - kafka
-    - postgres
+    - '8200'
     environment:
-    - GROUP_ID=1
-    - OFFSET_STORAGE_TOPIC=my_connect_offsets
-    - STATUS_STORAGE_TOPIC=my_connect_statuses
-    - BOOTSTRAP_SERVERS=kafka:29092
-    - LOG_LEVEL=TRACE
-    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    - BAO_DEV_ROOT_TOKEN_ID=my-root-token
+    command:
+    - server
+    - -dev
+    - -dev-no-store-token
     healthcheck:
-      retries: 30
-      interval: 10s
-      start_period: 10s
+      start_period: 5s
       timeout: 5s
       test: [
         CMD,
-        curl,
-        -f,
-        'http://localhost:8083/connectors'
+        wget,
+        --no-verbose,
+        --tries=1,
+        --spider,
+        'http://127.0.0.0:8200'
       ]
-      
+      retries: 3
+      interval: 10s
+  openbao-init:
+    image: openbao/openbao:2.5.4
+    labels:
+      io.quarkus.devservices.compose.wait_for.logs: .*Success! Uploaded policy.*
+    restart: 'no'
+    links:
+    - openbao
+    environment:
+    - BAO_TOKEN=my-root-token
+    - BAO_ADDR=http://openbao:8200
+    entrypoint: [
+      sh,
+      -c,
+      sleep 10;bao policy write pulse-app-policy /tmp/pulse-policy-policy.hcl;bao
+        auth enable userpass;bao write auth/userpass/users/bob password=sinclair policies=pulse-app-policy
+    ]
+    volumes:
+    - ./pulse-policy-policy.hcl:/tmp/pulse-policy-policy.hcl:ro,z
     depends_on:
-    - postgres
-    - kafka
+    - openbao

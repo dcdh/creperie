@@ -15,7 +15,7 @@ public record AuditEventDTO(String functionalDomain,
     public static AuditEventDTO from(final AuditEvent auditEvent, final String message) {
         return new AuditEventDTO(
                 auditEvent.fromApplication().functionalDomain(),
-                auditEvent.creationDate().atZone(ZoneId.systemDefault()),
+                auditEvent.storedAt().atZone(ZoneId.systemDefault()),
                 auditEvent.eventType().type(),
                 message);
     }

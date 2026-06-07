@@ -6,8 +6,11 @@ import com.creperie.cuisine.domain.event.CommandeAProduire;
 import com.creperie.cuisine.domain.event.ProductionTerminee;
 import com.damdamdeo.pulse.extension.core.AggregateRoot;
 import com.damdamdeo.pulse.extension.core.BelongsTo;
+import com.damdamdeo.pulse.extension.core.BusinessException;
+import com.damdamdeo.pulse.extension.core.ExecutionContext;
 import com.damdamdeo.pulse.extension.core.event.EventAppender;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
+import com.damdamdeo.pulse.extension.core.executedby.ExecutedBy;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,24 +31,30 @@ public final class Production extends AggregateRoot<PreparationIdentifier> {
         this.status = status;
     }
 
-    public void handle(final ProduireCommande produireCommande, final EventAppender eventAppender) {
+    public void handle(final ProduireCommande produireCommande, final ExecutionContext executionContext, final EventAppender<PreparationIdentifier> eventAppender) throws BusinessException {
         Objects.requireNonNull(produireCommande);
+        Objects.requireNonNull(executionContext);
         Objects.requireNonNull(eventAppender);
         eventAppender.append(new CommandeAProduire(produireCommande.plats()));
     }
 
-    public void handle(final MarkProductionTerminee markProductionTerminee, final EventAppender eventAppender) {
+    public void handle(final MarkProductionTerminee markProductionTerminee, final ExecutionContext executionContext, final EventAppender<PreparationIdentifier> eventAppender) throws BusinessException {
         Objects.requireNonNull(markProductionTerminee);
+        Objects.requireNonNull(executionContext);
         Objects.requireNonNull(eventAppender);
         eventAppender.append(new ProductionTerminee());
     }
 
-    public void on(final CommandeAProduire commandeAProduire) {
+    public void on(final CommandeAProduire commandeAProduire, final ExecutedBy executedBy) {
+        Objects.requireNonNull(commandeAProduire);
+        Objects.requireNonNull(executedBy);
         this.plats = commandeAProduire.plats();
         this.status = Status.A_PRODUIRE;
     }
 
-    public void on(final ProductionTerminee productionTerminee) {
+    public void on(final ProductionTerminee productionTerminee, final ExecutedBy executedBy) {
+        Objects.requireNonNull(productionTerminee);
+        Objects.requireNonNull(executedBy);
         this.status = Status.PRODUCTION_TERMINEE;
     }
 
@@ -59,11 +68,11 @@ public final class Production extends AggregateRoot<PreparationIdentifier> {
 
     @Override
     public BelongsTo belongsTo() {
-        return new BelongsTo(id);
+        return BelongsTo.himself(this);
     }
 
     @Override
     public OwnedBy ownedBy() {
-        return new OwnedBy("TOUT_LE_MONDE");
+        return OwnedBy.himself(this);
     }
 }

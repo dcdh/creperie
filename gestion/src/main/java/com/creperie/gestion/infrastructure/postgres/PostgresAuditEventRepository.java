@@ -27,14 +27,6 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
     @Override
     @Transactional
     public void store(final AuditEvent auditEvent) {
-        auditEvent.fromApplication().functionalDomain();
-        auditEvent.aggregateRootType().type();
-        auditEvent.aggregateId().id();
-        auditEvent.currentVersionInConsumption().version();
-        auditEvent.creationDate();
-        auditEvent.eventType();
-        auditEvent.encryptedPayload().payload();
-        auditEvent.ownedBy().id();
         try (final Connection connection = dataSource.getConnection();
              final PreparedStatement ps = connection.prepareStatement(
                      // language=sql
@@ -58,7 +50,7 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
             ps.setString(4, auditEvent.aggregateId().id());
             ps.setInt(5, auditEvent.currentVersionInConsumption().version());
             // Instant -> TIMESTAMPTZ
-            ps.setTimestamp(6, Timestamp.from(auditEvent.creationDate()));
+            ps.setTimestamp(6, Timestamp.from(auditEvent.storedAt()));
             ps.setString(7, auditEvent.eventType().type());
             // byte[] -> BYTEA
             ps.setBytes(8, auditEvent.encryptedPayload().payload());

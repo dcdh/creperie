@@ -7,9 +7,12 @@ import com.creperie.cuisine.domain.Status;
 import com.creperie.cuisine.domain.command.MarkProductionTerminee;
 import com.creperie.cuisine.domain.event.CommandeAProduire;
 import com.creperie.cuisine.domain.event.ProductionTerminee;
+import com.damdamdeo.pulse.extension.core.BusinessException;
 import com.damdamdeo.pulse.extension.core.command.CommandHandler;
 import com.damdamdeo.pulse.extension.core.event.Event;
 import com.damdamdeo.pulse.extension.core.event.EventRepository;
+import com.damdamdeo.pulse.extension.core.event.ExecutedByEvent;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -35,6 +38,7 @@ public class ProductionEndpoint {
         }
     }
 
+    @RegisterForReflection(registerFullHierarchy = true)
     @Schema(
             name = "Event",
             description = "Generic events",
@@ -53,6 +57,7 @@ public class ProductionEndpoint {
         String getType();
     }
 
+    @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Event", required = true, requiredProperties = {"type", "plats"})
     public record CommandeAProduireDTO(List<PlatDTO> plats) implements EventDTO {
         @Override
@@ -61,6 +66,7 @@ public class ProductionEndpoint {
         }
     }
 
+    @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Event", required = true, requiredProperties = {"nom", "type"})
     public record ProductionTermineeDTO() implements EventDTO {
         @Override
@@ -69,11 +75,13 @@ public class ProductionEndpoint {
         }
     }
 
+    @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Response", required = true, requiredProperties = {"production", "events"})
     public record ResponseDTO(ProductionDTO production, List<EventDTO> events) {
 
     }
 
+    @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Production", required = true, requiredProperties = {"id", "plats", "status"})
     public record ProductionDTO(String id, List<PlatDTO> plats, Status status) {
 
@@ -85,8 +93,8 @@ public class ProductionEndpoint {
         }
     }
 
-    private EventDTO from(final Event event) {
-        return switch (event) {
+    private EventDTO from(final ExecutedByEvent<?> event) {
+        return switch (event.event()) {
             case CommandeAProduire e -> new CommandeAProduireDTO(e.plats().stream().map(PlatDTO::from).toList());
             case ProductionTerminee e -> new ProductionTermineeDTO();
             default -> throw new IllegalStateException("unhandled event: " + event);
@@ -97,7 +105,7 @@ public class ProductionEndpoint {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public ResponseDTO markProductionTerminee(@FormParam("id") final String id) {
+    public ResponseDTO markProductionTerminee(@FormParam("id") final String id) throws BusinessException {
         final Production handled = productionCommandeCommandHandler.handle(
                 new MarkProductionTerminee(new PreparationIdentifier(id)));
         return new ResponseDTO(

@@ -2,7 +2,7 @@ import { TextField, Button, Card, CardContent, Typography, Stack, ToggleButton, 
 import {useState} from "react";
 import {
     postPriseDeCommandeCommencerLaPriseDeCommande,
-    postPriseDeCommandeNumeroDeTableAjouterPlat, postPriseDeCommandeNumeroDeTableFinaliserLaCommande
+    postPriseDeCommandeCommandIdentifierAjouterPlat, postPriseDeCommandeCommandIdentifierFinaliserLaCommande
 } from "./api/endpoints.ts";
 import {Response, Status} from "./api/model";
 
@@ -23,7 +23,7 @@ export default function PriseDeCommande() {
 
 
     const ajouterPlat = async (nom: string) => {
-        const res = await postPriseDeCommandeNumeroDeTableAjouterPlat(numeroDeTable, {
+        const res = await postPriseDeCommandeCommandIdentifierAjouterPlat(response!.commande.commandeIdentifier, {
             nom: nom,
         });
         setResponse(res);
@@ -31,7 +31,7 @@ export default function PriseDeCommande() {
 
 
     const finaliser = async () => {
-        const res = await postPriseDeCommandeNumeroDeTableFinaliserLaCommande(numeroDeTable);
+        const res = await postPriseDeCommandeCommandIdentifierFinaliserLaCommande(response!.commande.commandeIdentifier);
         setResponse(res);
     };
 

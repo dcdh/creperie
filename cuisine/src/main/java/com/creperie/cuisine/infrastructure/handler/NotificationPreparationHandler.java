@@ -10,6 +10,7 @@ import com.damdamdeo.pulse.extension.consumer.runtime.event.AsyncEventConsumerCh
 import com.damdamdeo.pulse.extension.core.AggregateId;
 import com.damdamdeo.pulse.extension.core.AggregateRootType;
 import com.damdamdeo.pulse.extension.core.BelongsTo;
+import com.damdamdeo.pulse.extension.core.BusinessException;
 import com.damdamdeo.pulse.extension.core.command.CommandHandler;
 import com.damdamdeo.pulse.extension.core.consumer.CurrentVersionInConsumption;
 import com.damdamdeo.pulse.extension.core.consumer.DecryptablePayload;
@@ -30,9 +31,9 @@ import jakarta.inject.Inject;
 import org.apache.commons.lang3.Validate;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -73,7 +74,7 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
                               final AggregateRootType aggregateRootType,
                               final AggregateId aggregateId,
                               final CurrentVersionInConsumption currentVersionInConsumption,
-                              final Instant creationDate,
+                              final ZonedDateTime storedAt,
                               final EventType eventType,
                               final EncryptedPayload encryptedPayload,
                               final OwnedBy ownedBy,
@@ -103,13 +104,17 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
                     plats.add(new Plat(node.get("nom").asText()));
                 });
 
-                productionCommandeCommandHandler.handle(new ProduireCommande(preparationIdentifier, plats));
-                Log.infov("Should notify event ''{0}''", eventType.type());
-                liveNotifierCommandeAProduireDTOPublisher.publish(
-                        COMMANDE_A_PRODUIRE, new CommandeAProduireDTO(
-                                preparationIdentifier.id(),
-                                plats.stream().map(ProductionEndpoint.PlatDTO::from).toList()), ownedBy,
-                        Audience.AllConnected.INSTANCE);
+                try {
+                    productionCommandeCommandHandler.handle(new ProduireCommande(preparationIdentifier, plats));
+                    Log.infov("Should notify event ''{0}''", eventType.type());
+                    liveNotifierCommandeAProduireDTOPublisher.publish(
+                            COMMANDE_A_PRODUIRE, new CommandeAProduireDTO(
+                                    preparationIdentifier.id(),
+                                    plats.stream().map(ProductionEndpoint.PlatDTO::from).toList()), ownedBy,
+                            Audience.AllConnected.INSTANCE);
+                } catch (BusinessException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }

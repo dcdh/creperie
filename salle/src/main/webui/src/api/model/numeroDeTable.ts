@@ -6,5 +6,5 @@
  */
 
 export interface NumeroDeTable {
-  numero: number;
+  numero?: number;
 }

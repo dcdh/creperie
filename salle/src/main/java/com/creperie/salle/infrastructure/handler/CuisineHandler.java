@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -51,7 +52,7 @@ public class CuisineHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final AggregateRootType aggregateRootType,
                               final AggregateId aggregateId,
                               final CurrentVersionInConsumption currentVersionInConsumption,
-                              final Instant creationDate,
+                              final ZonedDateTime storedAt,
                               final EventType eventType,
                               final EncryptedPayload encryptedPayload,
                               final OwnedBy ownedBy,
