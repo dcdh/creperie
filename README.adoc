@@ -27,3 +27,7 @@ et integrer le dahsbard jmx globals pour l'ensembles des services compatible (ka
 == Kafka
 
 https://github.com/mcagriaktas/kafka-lab
+
+== SSE
+
+Si le SSE ne fonctionne pas, trop d'ongles ouverts. Il faut en fermer.
