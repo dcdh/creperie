@@ -16,10 +16,12 @@ import static org.hamcrest.core.IsEqual.equalTo;
 @QuarkusTest
 class PriseDeCommandeEndpointTest {
 
+    static String commandeIdentifier;
+
     @Test
     @Order(1)
     void shouldCommencerLaPriseDeCommande() {
-        given()
+        commandeIdentifier = given()
                 .contentType(ContentType.URLENC)
                 .formParam("nombreDeConvives", 4)
                 .formParam("numeroDeTable", 12)
@@ -29,7 +31,7 @@ class PriseDeCommandeEndpointTest {
                 .log().all()
                 .statusCode(200)
                 .body("commande", notNullValue())
-                .body("commande.commandeIdentifier", equalTo("12-000001"))
+                .body("commande.commandeIdentifier", notNullValue())
                 .body("commande.numeroDeTable", equalTo(12))
                 .body("commande.nombreDeConvives", equalTo(4))
                 .body("commande.datePriseDeCommande", notNullValue())
@@ -37,7 +39,9 @@ class PriseDeCommandeEndpointTest {
                 .body("commande.status", equalTo("EN_COURS_DE_PRISE"))
                 .body("events", hasSize(1))
                 .body("events[0].nombreDeConvives", equalTo(4))
-                .body("events[0].type", equalTo("CommandeEnCoursDePrise"));
+                .body("events[0].type", equalTo("CommandeEnCoursDePrise"))
+                .extract()
+                .body().path("commande.commandeIdentifier");
     }
 
     @Test
@@ -46,14 +50,14 @@ class PriseDeCommandeEndpointTest {
         given()
                 .contentType(ContentType.URLENC)
                 .formParam("nom", "NUTELLA")
-                .pathParam("commandIdentifier", "12-000001")
+                .pathParam("commandIdentifier", commandeIdentifier)
                 .when()
                 .post("/priseDeCommande/{commandIdentifier}/ajouterPlat")
                 .then()
                 .log().all()
                 .statusCode(200)
                 .body("commande", notNullValue())
-                .body("commande.commandeIdentifier", equalTo("12-000001"))
+                .body("commande.commandeIdentifier", equalTo(commandeIdentifier))
                 .body("commande.numeroDeTable", equalTo(12))
                 .body("commande.nombreDeConvives", equalTo(4))
                 .body("commande.datePriseDeCommande", notNullValue())
@@ -71,14 +75,14 @@ class PriseDeCommandeEndpointTest {
     @Order(3)
     void shouldFinaliserLaCommande() {
         given()
-                .pathParam("commandIdentifier", "12-000001")
+                .pathParam("commandIdentifier", commandeIdentifier)
                 .when()
                 .post("/priseDeCommande/{commandIdentifier}/finaliserLaCommande")
                 .then()
                 .log().all()
                 .statusCode(200)
                 .body("commande", notNullValue())
-                .body("commande.commandeIdentifier", equalTo("12-000001"))
+                .body("commande.commandeIdentifier", equalTo(commandeIdentifier))
                 .body("commande.numeroDeTable", equalTo(12))
                 .body("commande.nombreDeConvives", equalTo(4))
                 .body("commande.datePriseDeCommande", notNullValue())

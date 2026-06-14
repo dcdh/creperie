@@ -46,7 +46,7 @@ services:
     - postgres
     - kafka
   postgres:
-    image: postgres:17.6-alpine3.22
+    image: postgres:18.4-alpine3.23
     labels:
       io.quarkus.devservices.compose.wait_for.logs: .*database system is ready to
         accept connections.*
@@ -54,9 +54,9 @@ services:
     ports:
     - '5432'
     environment:
-    - POSTGRES_PASSWORD=quarkus
     - POSTGRES_USER=quarkus
     - POSTGRES_DB=quarkus
+    - POSTGRES_PASSWORD=quarkus
     command:
     - postgres
     - -c
@@ -116,6 +116,7 @@ services:
     image: openbao/openbao:2.5.4
     labels:
       io.quarkus.devservices.compose.wait_for.logs: .*Success! Uploaded policy.*
+      io.quarkus.devservices.compose.ignore: 'true'
     restart: 'no'
     links:
     - openbao

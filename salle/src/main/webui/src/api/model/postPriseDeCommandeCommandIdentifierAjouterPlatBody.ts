@@ -5,6 +5,6 @@
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
 
-export interface EventDTO {
-  type?: string;
-}
+export type PostPriseDeCommandeCommandIdentifierAjouterPlatBody = {
+  nom?: string;
+};

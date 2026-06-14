@@ -62,7 +62,7 @@ public class CuisineHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final Supplier<AggregateRootLoaded<JsonNode>> aggregateRootLoadedSupplier) {
         Log.infov("Handling message for event type ''{0}''", eventType.type());
         if ("ProductionTerminee".equals(eventType.type())) {
-            final Integer numeroDeTable = Integer.valueOf(aggregateId.id().split("/")[0]);
+            final Integer numeroDeTable = Integer.valueOf(aggregateId.id().split("-")[0]);
             liveNotifierPublisherProducer.publish(
                     "CommandePretePourEtreServie",
                     new CommandePretePourEtreServieDTO(numeroDeTable),

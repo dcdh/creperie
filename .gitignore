@@ -24,3 +24,4 @@
 /cuisine/pulse-policy-policy.hcl
 /gestion/pulse-policy-policy.hcl
 /salle/pulse-policy-policy.hcl
+/salle/pulse_obfuscator.sql

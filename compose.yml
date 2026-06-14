@@ -31,17 +31,16 @@ services:
       ]
       timeout: 5s
     volumes:
-      - ./cuisine/cuisine_production_sequences.sql:/docker-entrypoint-initdb.d/cuisine_production_sequences.sql:ro,z
-      - ./cuisine/cuisine_production_sequences_table.sql:/docker-entrypoint-initdb.d/cuisine_production_sequences_table.sql:ro,z
       - ./cuisine/cuisine_production_aggregates.sql:/docker-entrypoint-initdb.d/cuisine_production_aggregates.sql:ro,z
       - ./cuisine/cuisine_production_idempotency_consumer.sql:/docker-entrypoint-initdb.d/cuisine_production_idempotency_consumer.sql:ro,z
-      - ./gestion/salle_prisedecommande_target_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_target_consumer.sql:ro,z
-      - ./gestion/cuisine_production_target_consumer.sql:/docker-entrypoint-initdb.d/cuisine_production_target_consumer.sql:ro,z
+      - ./cuisine/cuisine_production_sequences.sql:/docker-entrypoint-initdb.d/cuisine_production_sequences.sql:ro,z
+      - ./cuisine/cuisine_production_sequences_table.sql:/docker-entrypoint-initdb.d/cuisine_production_sequences_table.sql:ro,z
       - ./gestion/gestion_statistics_idempotency_consumer.sql:/docker-entrypoint-initdb.d/gestion_statistics_idempotency_consumer.sql:ro,z
-      - ./salle/salle_prisedecommande_sequences.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences.sql:ro,z
-      - ./salle/salle_prisedecommande_sequences_table.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences_table.sql:ro,z
+      - ./salle/pulse_obfuscator.sql:/docker-entrypoint-initdb.d/pulse_obfuscator.sql:ro,z
       - ./salle/salle_prisedecommande_aggregates.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_aggregates.sql:ro,z
       - ./salle/salle_prisedecommande_idempotency_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_idempotency_consumer.sql:ro,z
+      - ./salle/salle_prisedecommande_sequences.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences.sql:ro,z
+      - ./salle/salle_prisedecommande_sequences_table.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences_table.sql:ro,z
   # https://debezium.io/documentation/reference/stable/operations/monitoring.html
   # https://github.com/debezium/debezium-examples/tree/main/monitoring
   kafka:

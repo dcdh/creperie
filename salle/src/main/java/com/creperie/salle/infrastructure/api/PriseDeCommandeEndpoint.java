@@ -11,7 +11,6 @@ import com.damdamdeo.pulse.extension.core.BusinessException;
 import com.damdamdeo.pulse.extension.core.command.CommandHandler;
 import com.damdamdeo.pulse.extension.core.event.EventRepository;
 import com.damdamdeo.pulse.extension.core.event.ExecutedByEvent;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -77,7 +76,6 @@ public class PriseDeCommandeEndpoint {
     @Schema(name = "Event", required = true, requiredProperties = {"nombreDeConvives", "type"})
     public record CommandeEnCoursDePriseDTO(Integer nombreDeConvives) implements EventDTO {
 
-        @JsonProperty("type")
         @Override
         public String getType() {
             return "CommandeEnCoursDePrise";
@@ -88,7 +86,6 @@ public class PriseDeCommandeEndpoint {
     @Schema(name = "Event", required = true, requiredProperties = {"plat", "type"})
     public record PlatAjouteDTO(PlatDTO plat) implements EventDTO {
 
-        @JsonProperty("type")
         @Override
         public String getType() {
             return "PlatAjoute";
@@ -99,7 +96,6 @@ public class PriseDeCommandeEndpoint {
     @Schema(name = "Event", required = true, requiredProperties = {"type"})
     public record CommandeFinaliseeDTO() implements EventDTO {
 
-        @JsonProperty("type")
         @Override
         public String getType() {
             return "CommandeFinalisee";
@@ -115,7 +111,8 @@ public class PriseDeCommandeEndpoint {
     @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Commande", required = true, requiredProperties = {"commandeIdentifier", "numeroDeTable",
             "nombreDeConvives", "datePriseDeCommande", "plats", "status"})
-    public record CommandeDTO(String commandeIdentifier,
+    public record CommandeDTO(@Schema(type = SchemaType.STRING, implementation = String.class)
+                              CommandeIdentifier commandeIdentifier,
                               Integer numeroDeTable,
                               Integer nombreDeConvives,
                               Instant datePriseDeCommande,
@@ -124,7 +121,7 @@ public class PriseDeCommandeEndpoint {
 
         public static CommandeDTO from(final Commande commande) {
             return new CommandeDTO(
-                    commande.id().id(),
+                    commande.id(),
                     commande.id().numeroDeTable().numero(),
                     commande.nombreDeConvives().nombre(),
                     commande.datePriseDeCommande().date(),
