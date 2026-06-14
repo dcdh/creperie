@@ -9,8 +9,8 @@ services:
     - '29092'
     environment:
     - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
-    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
     - NODE_ID=1
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
     depends_on:
     - postgres
   connect:
@@ -25,22 +25,23 @@ services:
     - postgres
     environment:
     - LOG_LEVEL=INFO
-    - CONFIG_STORAGE_TOPIC=my_connect_configs
-    - GROUP_ID=1
-    - OFFSET_STORAGE_TOPIC=my_connect_offsets
-    - STATUS_STORAGE_TOPIC=my_connect_statuses
     - BOOTSTRAP_SERVERS=kafka:29092
+    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - GROUP_ID=1
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
     healthcheck:
-      start_period: 10s
       timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 30
       test: [
         CMD,
         curl,
         -f,
         'http://localhost:8083/connectors'
       ]
-      retries: 30
-      interval: 10s
+      
     depends_on:
     - postgres
     - kafka
@@ -53,8 +54,8 @@ services:
     ports:
     - '5432'
     environment:
-    - POSTGRES_PASSWORD=quarkus
     - POSTGRES_DB=quarkus
+    - POSTGRES_PASSWORD=quarkus
     - POSTGRES_USER=quarkus
     command:
     - postgres
@@ -69,14 +70,15 @@ services:
     - -c
     - synchronized_standby_slots=replication_slot
     healthcheck:
-      start_period: 10s
       timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 5
       test: [
         CMD,
         pg_isready
       ]
-      retries: 5
-      interval: 10s
+      
     volumes:
     - ./salle_prisedecommande_sequences.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences.sql:ro,z
     - ./salle_prisedecommande_sequences_table.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences_table.sql:ro,z
@@ -97,8 +99,10 @@ services:
     - -dev
     - -dev-no-store-token
     healthcheck:
-      start_period: 5s
       timeout: 5s
+      start_period: 5s
+      interval: 10s
+      retries: 3
       test: [
         CMD,
         wget,
@@ -107,8 +111,7 @@ services:
         --spider,
         'http://127.0.0.0:8200'
       ]
-      retries: 3
-      interval: 10s
+      
   openbao-init:
     image: openbao/openbao:2.5.4
     labels:
