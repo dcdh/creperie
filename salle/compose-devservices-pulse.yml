@@ -9,8 +9,8 @@ services:
     - '5432'
     environment:
     - POSTGRES_DB=quarkus
-    - POSTGRES_USER=quarkus
     - POSTGRES_PASSWORD=quarkus
+    - POSTGRES_USER=quarkus
     command:
     - postgres
     - -c
@@ -28,16 +28,15 @@ services:
         CMD,
         pg_isready
       ]
-      retries: 5
-      interval: 10s
-      start_period: 10s
       timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 5
     volumes:
     - ./pulse_obfuscator.sql:/docker-entrypoint-initdb.d/pulse_obfuscator.sql:ro,z
-    - ./salle_prisedecommande_sequences.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences.sql:ro,z
-    - ./salle_prisedecommande_sequences_table.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_sequences_table.sql:ro,z
-    - ./salle_prisedecommande_aggregates.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_aggregates.sql:ro,z
-    - ./salle_prisedecommande_idempotency_consumer.sql:/docker-entrypoint-initdb.d/salle_prisedecommande_idempotency_consumer.sql:ro,z
+    - ./pulse_sequences_tables.sql:/docker-entrypoint-initdb.d/pulse_sequences_tables.sql:ro,z
+    - ./salle_prise_de_commande_aggregates.sql:/docker-entrypoint-initdb.d/salle_prise_de_commande_aggregates.sql:ro,z
+    - ./salle_prise_de_commande_idempotency_consumer.sql:/docker-entrypoint-initdb.d/salle_prise_de_commande_idempotency_consumer.sql:ro,z
   kafka:
     image: debezium-for-dev-service/kafka:4.2.0
     labels:
@@ -47,9 +46,9 @@ services:
     - '9092'
     - '29092'
     environment:
-    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-    - NODE_ID=1
     - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
+    - NODE_ID=1
+    - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
     depends_on:
     - postgres
   connect:
@@ -63,12 +62,12 @@ services:
     - kafka
     - postgres
     environment:
-    - LOG_LEVEL=INFO
     - CONFIG_STORAGE_TOPIC=my_connect_configs
-    - GROUP_ID=1
-    - OFFSET_STORAGE_TOPIC=my_connect_offsets
-    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - LOG_LEVEL=INFO
     - BOOTSTRAP_SERVERS=kafka:29092
+    - STATUS_STORAGE_TOPIC=my_connect_statuses
+    - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    - GROUP_ID=1
     healthcheck:
       test: [
         CMD,
@@ -76,10 +75,10 @@ services:
         -f,
         'http://localhost:8083/connectors'
       ]
-      retries: 30
-      interval: 10s
-      start_period: 10s
       timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 30
     depends_on:
     - postgres
     - kafka
@@ -91,8 +90,8 @@ services:
     ports:
     - '8200'
     environment:
-    - BAO_DEV_ROOT_TOKEN_ID=my-root-token
     - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    - BAO_DEV_ROOT_TOKEN_ID=my-root-token
     command:
     - server
     - -dev
@@ -106,10 +105,10 @@ services:
         --spider,
         'http://127.0.0.0:8200'
       ]
-      retries: 3
-      interval: 10s
-      start_period: 5s
       timeout: 5s
+      start_period: 5s
+      interval: 10s
+      retries: 3
   openbao-init:
     image: openbao/openbao:2.5.4
     labels:
@@ -119,8 +118,8 @@ services:
     links:
     - openbao
     environment:
-    - BAO_ADDR=http://openbao:8200
     - BAO_TOKEN=my-root-token
+    - BAO_ADDR=http://openbao:8200
     entrypoint: [
       sh,
       -c,

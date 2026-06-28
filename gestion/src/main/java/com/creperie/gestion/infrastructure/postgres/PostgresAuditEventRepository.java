@@ -32,8 +32,7 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
                      // language=sql
                      """
                              INSERT INTO audit_event (
-                                         functional_domain,
-                                         component_name,
+                                         application_name,
                                          aggregate_type,
                                          aggregate_id,
                                          version,
@@ -41,20 +40,19 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
                                          event_type,
                                          encrypted_payload,
                                          owned_by
-                                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                              """
              )) {
-            ps.setString(1, auditEvent.fromApplication().functionalDomain());
-            ps.setString(2, auditEvent.fromApplication().componentName());
-            ps.setString(3, auditEvent.aggregateRootType().type());
-            ps.setString(4, auditEvent.aggregateId().id());
-            ps.setInt(5, auditEvent.currentVersionInConsumption().version());
+            ps.setString(1, auditEvent.fromApplication().name());
+            ps.setString(2, auditEvent.aggregateRootType().type());
+            ps.setString(3, auditEvent.aggregateId().id());
+            ps.setInt(4, auditEvent.currentVersionInConsumption().version());
             // Instant -> TIMESTAMPTZ
-            ps.setTimestamp(6, Timestamp.from(auditEvent.storedAt()));
-            ps.setString(7, auditEvent.eventType().type());
+            ps.setTimestamp(5, Timestamp.from(auditEvent.storedAt()));
+            ps.setString(6, auditEvent.eventType().type());
             // byte[] -> BYTEA
-            ps.setBytes(8, auditEvent.encryptedPayload().payload());
-            ps.setString(9, auditEvent.ownedBy().id());
+            ps.setBytes(7, auditEvent.encryptedPayload().payload());
+            ps.setString(8, auditEvent.ownedBy().id());
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -68,8 +66,7 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
              final PreparedStatement ps = connection.prepareStatement(
                      // language=sql
                      """
-                             SELECT functional_domain,
-                                    component_name,
+                             SELECT application_name,
                                     aggregate_type,
                                     aggregate_id,
                                     version,
@@ -87,8 +84,7 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
                 list.add(
                         new AuditEvent(
                                 new FromApplication(
-                                        rs.getString("functional_domain"),
-                                        rs.getString("component_name")),
+                                        rs.getString("application_name")),
                                 new AggregateRootType(
                                         rs.getString("aggregate_type")),
                                 new AnyAggregateId(

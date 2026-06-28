@@ -34,8 +34,8 @@ import java.util.function.Supplier;
 @AsyncEventConsumerChannel(
         purpose = "aggregator",
         sources = {
-                @Source(functionalDomain = "Salle", componentName = "priseDeCommande"),
-                @Source(functionalDomain = "Cuisine", componentName = "Production")})
+                @Source(applicationNaming = "SallePriseDeCommande"),
+                @Source(applicationNaming = "CuisineProduction")})
 public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode> {
 
     @Inject
@@ -87,8 +87,8 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                     eventType, encryptedPayload, ownedBy);
             auditEventRepository.store(auditEvent);
             final DateDeService dateDeService = DateDeService.from(storedAt.toInstant());
-            switch (fromApplication.functionalDomain()) {
-                case "Salle":
+            switch (fromApplication.applicationNaming().name()) {
+                case "SallePriseDeCommande":
                     switch (eventType.type()) {
                         case "CommandeEnCoursDePrise":
                             final int nombreDeConvives = decryptableEventPayload.payload().get("nombreDeConvives").get("nombre").asInt();
@@ -103,11 +103,11 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                             applyForCommandeStatistique(dateDeService, CommandeStatistique::nouvelleCommandeFinalisee);
                             break;
                         default:
-                            throw new IllegalArgumentException("Unknown eventType %s for functionalDomain %s"
-                                    .formatted(eventType.type(), fromApplication.functionalDomain()));
+                            throw new IllegalArgumentException("Unknown eventType %s for application %s"
+                                    .formatted(eventType.type(), fromApplication.name()));
                     }
                     break;
-                case "Cuisine":
+                case "CuisineProduction":
                     switch (eventType.type()) {
                         case "CommandeAProduire":
                             final JsonNode platsJsonNode = decryptableEventPayload.payload().get("plats");
@@ -122,12 +122,12 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                             applyForCommandeStatistique(dateDeService, CommandeStatistique::nouvelleCommandeProduite);
                             break;
                         default:
-                            throw new IllegalArgumentException("Unknown eventType %s for functionalDomain %s"
-                                    .formatted(eventType.type(), fromApplication.functionalDomain()));
+                            throw new IllegalArgumentException("Unknown eventType %s for application %s"
+                                    .formatted(eventType.type(), fromApplication.name()));
                     }
                     break;
                 default:
-                    throw new IllegalStateException("Unknown functionalDomain %s".formatted(fromApplication.functionalDomain()));
+                    throw new IllegalStateException("Unknown application %s".formatted(fromApplication.name()));
             }
             liveNotifierAuditEventDTOPublisherProducer.publish(
                     "LiveEvents", auditEventDTOMapper.mapFrom(auditEvent), ownedBy, Audience.AllConnected.INSTANCE);

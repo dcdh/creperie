@@ -8,9 +8,9 @@ services:
     - '9092'
     - '29092'
     environment:
-    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
     - NODE_ID=1
     - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    - CLUSTER_ID=oh-sxaDRTcyAr6pFRbXyzA
     depends_on:
     - postgres
   postgres:
@@ -38,15 +38,14 @@ services:
     - -c
     - synchronized_standby_slots=replication_slot
     healthcheck:
-      timeout: 5s
-      start_period: 10s
-      interval: 10s
       retries: 5
       test: [
         CMD,
         pg_isready
       ]
-      
+      timeout: 5s
+      start_period: 10s
+      interval: 10s
     volumes:
     - ./gestion_statistics_idempotency_consumer.sql:/docker-entrypoint-initdb.d/gestion_statistics_idempotency_consumer.sql:ro,z
   openbao:
@@ -57,16 +56,13 @@ services:
     ports:
     - '8200'
     environment:
-    - BAO_DEV_ROOT_TOKEN_ID=my-root-token
     - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    - BAO_DEV_ROOT_TOKEN_ID=my-root-token
     command:
     - server
     - -dev
     - -dev-no-store-token
     healthcheck:
-      timeout: 5s
-      start_period: 5s
-      interval: 10s
       retries: 3
       test: [
         CMD,
@@ -76,7 +72,9 @@ services:
         --spider,
         'http://127.0.0.0:8200'
       ]
-      
+      timeout: 5s
+      start_period: 5s
+      interval: 10s
   openbao-init:
     image: openbao/openbao:2.5.4
     labels:

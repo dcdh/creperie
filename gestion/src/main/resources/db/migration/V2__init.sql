@@ -1,7 +1,6 @@
 CREATE TABLE audit_event
 (
-    functional_domain VARCHAR(255) NOT NULL,
-    component_name    VARCHAR(255) NOT NULL,
+    application_name  VARCHAR(255) NOT NULL,
     aggregate_type    VARCHAR(255) NOT NULL,
     aggregate_id      VARCHAR(255) NOT NULL,
     version           INTEGER      NOT NULL,

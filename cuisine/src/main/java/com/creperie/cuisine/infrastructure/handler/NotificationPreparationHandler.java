@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 @AsyncEventConsumerChannel(
         purpose = "notificationPreparation",
         sources = {
-                @Source(functionalDomain = "Salle", componentName = "priseDeCommande")})
+                @Source(applicationNaming = "SallePriseDeCommande")})
 public class NotificationPreparationHandler implements AsyncEventChannelMessageHandler<JsonNode> {
 
     private LocalDateTime derniereCommandeRecu;

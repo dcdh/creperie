@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 @AsyncEventConsumerChannel(
         purpose = "notification",
         sources = {
-                @Source(functionalDomain = "Cuisine", componentName = "Production")})
+                @Source(applicationNaming = "CuisineProduction")})
 public class CuisineHandler implements AsyncEventChannelMessageHandler<JsonNode> {
 
     @Inject

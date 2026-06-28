@@ -17,11 +17,13 @@
 /gestion/gestion_statistics_idempotency_consumer.sql
 /gestion/salle_prisedecommande_target_consumer.sql
 /salle/salle.iml
-/salle/salle_prisedecommande_aggregates.sql
-/salle/salle_prisedecommande_idempotency_consumer.sql
-/salle/salle_prisedecommande_sequences.sql
-/salle/salle_prisedecommande_sequences_table.sql
+/salle/pulse_sequences_tables.sql
+/salle/salle_prise_de_commande_aggregates.sql
+/salle/salle_prise_de_commande_idempotency_consumer.sql
 /cuisine/pulse-policy-policy.hcl
 /gestion/pulse-policy-policy.hcl
 /salle/pulse-policy-policy.hcl
 /salle/pulse_obfuscator.sql
+/.idea/
+/creperie-parent.iml
+/cuisine/pulse_sequences_tables.sql

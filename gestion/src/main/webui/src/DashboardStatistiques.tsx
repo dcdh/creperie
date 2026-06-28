@@ -177,7 +177,7 @@ const DashboardStatistiques: React.FC = () => {
                                             secondary={
                                                 <>
                                                     <Typography variant="caption" display="block">
-                                                        {event.functionalDomain} – {event.creationDate}
+                                                        {event.applicationName} – {event.creationDate}
                                                     </Typography>
                                                     <Typography variant="body2">{event.message}</Typography>
                                                 </>

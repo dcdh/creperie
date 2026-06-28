@@ -29,8 +29,8 @@ public class AuditEventDTOMapper {
             final DecryptedPayload decrypted = openPGPDecryptionService.decrypt(auditEvent.encryptedPayload(), auditEvent.ownedBy());
             final JsonNode payload = objectMapper.readTree(decrypted.payload());
             final String message;
-            switch (auditEvent.fromApplication().functionalDomain()) {
-                case "Salle":
+            switch (auditEvent.fromApplication().name()) {
+                case "SallePriseDeCommande":
                     switch (auditEvent.eventType().type()) {
                         case "CommandeEnCoursDePrise":
                             message = "Commande en cours de prise pour %d convives".formatted(
@@ -43,11 +43,11 @@ public class AuditEventDTOMapper {
                             message = "Commande finalisée";
                             break;
                         default:
-                            throw new IllegalArgumentException("Unknown eventType %s for functionalDomain %s"
-                                    .formatted(auditEvent.eventType().type(), auditEvent.fromApplication().functionalDomain()));
+                            throw new IllegalArgumentException("Unknown eventType %s for applicationName %s"
+                                    .formatted(auditEvent.eventType().type(), auditEvent.fromApplication().name()));
                     }
                     break;
-                case "Cuisine":
+                case "CuisineProduction":
                     switch (auditEvent.eventType().type()) {
                         case "CommandeAProduire":
                             final JsonNode platsJsonNode = payload.get("plats");
@@ -61,12 +61,12 @@ public class AuditEventDTOMapper {
                             message = "Production terminée";
                             break;
                         default:
-                            throw new IllegalArgumentException("Unknown eventType %s for functionalDomain %s"
-                                    .formatted(auditEvent.eventType().type(), auditEvent.fromApplication().functionalDomain()));
+                            throw new IllegalArgumentException("Unknown eventType %s for applicationName %s"
+                                    .formatted(auditEvent.eventType().type(), auditEvent.fromApplication().name()));
                     }
                     break;
                 default:
-                    throw new IllegalStateException("Unknown functionalDomain %s".formatted(auditEvent.fromApplication().functionalDomain()));
+                    throw new IllegalStateException("Unknown applicationName %s".formatted(auditEvent.fromApplication().name()));
             }
             return AuditEventDTO.from(auditEvent, message);
         } catch (final DecryptionException e) {
