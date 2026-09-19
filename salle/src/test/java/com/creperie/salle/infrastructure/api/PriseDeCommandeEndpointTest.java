@@ -2,21 +2,21 @@ package com.creperie.salle.infrastructure.api;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
+
+import java.util.Objects;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsEqual.equalTo;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @QuarkusTest
 class PriseDeCommandeEndpointTest {
 
-    static String commandeIdentifier;
+    String commandeIdentifier;
 
     @Test
     @Order(1)
@@ -26,6 +26,7 @@ class PriseDeCommandeEndpointTest {
                 .formParam("nombreDeConvives", 4)
                 .formParam("numeroDeTable", 12)
                 .when()
+                .log().all()
                 .post("/priseDeCommande/commencerLaPriseDeCommande")
                 .then()
                 .log().all()
@@ -47,11 +48,13 @@ class PriseDeCommandeEndpointTest {
     @Test
     @Order(2)
     void shouldAjouterPlat() {
+        Objects.requireNonNull(commandeIdentifier);
         given()
                 .contentType(ContentType.URLENC)
                 .formParam("nom", "NUTELLA")
                 .pathParam("commandIdentifier", commandeIdentifier)
                 .when()
+                .log().all()
                 .post("/priseDeCommande/{commandIdentifier}/ajouterPlat")
                 .then()
                 .log().all()
@@ -74,9 +77,11 @@ class PriseDeCommandeEndpointTest {
     @Test
     @Order(3)
     void shouldFinaliserLaCommande() {
+        Objects.requireNonNull(commandeIdentifier);
         given()
                 .pathParam("commandIdentifier", commandeIdentifier)
                 .when()
+                .log().all()
                 .post("/priseDeCommande/{commandIdentifier}/finaliserLaCommande")
                 .then()
                 .log().all()

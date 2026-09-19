@@ -1,5 +1,6 @@
 package com.creperie.salle.infrastructure.handler;
 
+import com.creperie.salle.domain.NumeroDeTable;
 import com.damdamdeo.pulse.extension.consumer.runtime.Source;
 import com.damdamdeo.pulse.extension.consumer.runtime.event.AsyncEventConsumerChannel;
 import com.damdamdeo.pulse.extension.core.AggregateId;
@@ -11,7 +12,7 @@ import com.damdamdeo.pulse.extension.core.consumer.FromApplication;
 import com.damdamdeo.pulse.extension.core.consumer.Purpose;
 import com.damdamdeo.pulse.extension.core.consumer.event.AggregateRootLoaded;
 import com.damdamdeo.pulse.extension.core.consumer.event.AsyncEventChannelMessageHandler;
-import com.damdamdeo.pulse.extension.core.encryption.EncryptedPayload;
+import com.damdamdeo.pulse.extension.core.encryption.Encrypted;
 import com.damdamdeo.pulse.extension.core.event.EventType;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
 import com.damdamdeo.pulse.extension.core.executedby.ExecutedBy;
@@ -19,11 +20,12 @@ import com.damdamdeo.pulse.extension.livenotifier.runtime.Audience;
 import com.damdamdeo.pulse.extension.livenotifier.runtime.LiveNotifierPublisher;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkus.logging.Log;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -38,8 +40,11 @@ public class CuisineHandler implements AsyncEventChannelMessageHandler<JsonNode>
     @Inject
     LiveNotifierPublisher<CommandePretePourEtreServieDTO> liveNotifierPublisherProducer;
 
+    @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "CommandePretePourEtreServie", required = true, requiredProperties = {"numeroDeTable"})
-    public record CommandePretePourEtreServieDTO(Integer numeroDeTable) {
+    public record CommandePretePourEtreServieDTO(
+            @Schema(type = SchemaType.STRING, implementation = String.class)
+            NumeroDeTable numeroDeTable) {
 
         public CommandePretePourEtreServieDTO {
             Objects.requireNonNull(numeroDeTable);
@@ -54,7 +59,7 @@ public class CuisineHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final CurrentVersionInConsumption currentVersionInConsumption,
                               final ZonedDateTime storedAt,
                               final EventType eventType,
-                              final EncryptedPayload encryptedPayload,
+                              final Encrypted encrypted,
                               final OwnedBy ownedBy,
                               final BelongsTo belongsTo,
                               final ExecutedBy executedBy,
@@ -62,7 +67,7 @@ public class CuisineHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final Supplier<AggregateRootLoaded<JsonNode>> aggregateRootLoadedSupplier) {
         Log.infov("Handling message for event type ''{0}''", eventType.type());
         if ("ProductionTerminee".equals(eventType.type())) {
-            final Integer numeroDeTable = Integer.valueOf(aggregateId.id().split("-")[0]);
+            final NumeroDeTable numeroDeTable = new NumeroDeTable(Integer.valueOf(aggregateId.id().split("-")[0].substring(1)));
             liveNotifierPublisherProducer.publish(
                     "CommandePretePourEtreServie",
                     new CommandePretePourEtreServieDTO(numeroDeTable),

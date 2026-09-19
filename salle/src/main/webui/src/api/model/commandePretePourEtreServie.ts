@@ -6,5 +6,5 @@
  */
 
 export interface CommandePretePourEtreServie {
-  numeroDeTable: number;
+  numeroDeTable: string;
 }

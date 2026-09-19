@@ -4,9 +4,10 @@
  * SallePriseDeCommande API
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
+import type { EventNombreDeConvives } from "./eventNombreDeConvives";
 import type { EventType } from "./eventType";
 
 export interface Event {
-  nombreDeConvives: number;
+  nombreDeConvives: EventNombreDeConvives;
   type: EventType;
 }

@@ -1,21 +1,19 @@
 package com.creperie.cuisine.infrastructure.api;
 
-import com.creperie.cuisine.domain.Plat;
 import com.creperie.cuisine.domain.PreparationIdentifier;
 import com.creperie.cuisine.domain.Production;
 import com.creperie.cuisine.domain.Status;
 import com.creperie.cuisine.domain.command.MarkProductionTerminee;
 import com.creperie.cuisine.domain.event.CommandeAProduire;
 import com.creperie.cuisine.domain.event.ProductionTerminee;
-import com.damdamdeo.pulse.extension.core.BusinessException;
-import com.damdamdeo.pulse.extension.core.command.CommandHandler;
-import com.damdamdeo.pulse.extension.core.event.Event;
+import com.creperie.cuisine.domain.usecase.MarkProductionTermineeUseCase;
 import com.damdamdeo.pulse.extension.core.event.EventRepository;
 import com.damdamdeo.pulse.extension.core.event.ExecutedByEvent;
+import com.damdamdeo.pulse.extension.core.usecase.UseCaseException;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.DiscriminatorMapping;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -24,18 +22,13 @@ import java.util.List;
 @Path("production")
 public class ProductionEndpoint {
 
-    @Inject
-    CommandHandler<Production, PreparationIdentifier> productionCommandeCommandHandler;
+    private final MarkProductionTermineeUseCase markProductionTermineeUseCase;
+    private final EventRepository<Production, PreparationIdentifier> eventRepository;
 
-    @Inject
-    EventRepository<Production, PreparationIdentifier> eventRepository;
-
-    @Schema(name = "Plat", required = true, requiredProperties = {"nom"})
-    public record PlatDTO(String nom) {
-
-        public static PlatDTO from(final Plat plat) {
-            return new PlatDTO(plat.nom());
-        }
+    public ProductionEndpoint(final MarkProductionTermineeUseCase markProductionTermineeUseCase,
+                              final EventRepository<Production, PreparationIdentifier> eventRepository) {
+        this.markProductionTermineeUseCase = markProductionTermineeUseCase;
+        this.eventRepository = eventRepository;
     }
 
     @RegisterForReflection(registerFullHierarchy = true)
@@ -83,11 +76,10 @@ public class ProductionEndpoint {
 
     @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Production", required = true, requiredProperties = {"id", "plats", "status"})
-    public record ProductionDTO(String id, List<PlatDTO> plats, Status status) {
-
+    public record ProductionDTO(PreparationIdentifier id, List<PlatDTO> plats, Status status) {
         public static ProductionDTO from(final Production production) {
             return new ProductionDTO(
-                    production.id().id(),
+                    production.id(),
                     production.plats().stream().map(PlatDTO::from).toList(),
                     production.status());
         }
@@ -105,9 +97,10 @@ public class ProductionEndpoint {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public ResponseDTO markProductionTerminee(@FormParam("id") final String id) throws BusinessException {
-        final Production handled = productionCommandeCommandHandler.handle(
-                new MarkProductionTerminee(new PreparationIdentifier(id)));
+    public ResponseDTO markProductionTerminee(
+            @Schema(type = SchemaType.STRING, implementation = String.class)
+            @FormParam("id") final PreparationIdentifier id) throws UseCaseException {
+        final Production handled = markProductionTermineeUseCase.execute(new MarkProductionTerminee(id));
         return new ResponseDTO(
                 ProductionDTO.from(handled),
                 eventRepository.loadOrderByVersionASC(handled.id()).stream().map(this::from).toList());

@@ -27,3 +27,6 @@
 /.idea/
 /creperie-parent.iml
 /cuisine/pulse_sequences_tables.sql
+/salle/salle_prise_de_commande_aggregate_executed_by.sql
+/cuisine/cuisine_production_aggregate_executed_by.sql
+/gestion/gestion_statistics_aggregate_executed_by.sql

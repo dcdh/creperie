@@ -8,9 +8,9 @@ services:
     ports:
     - '5432'
     environment:
-    - POSTGRES_DB=quarkus
     - POSTGRES_PASSWORD=quarkus
     - POSTGRES_USER=quarkus
+    - POSTGRES_DB=quarkus
     command:
     - postgres
     - -c
@@ -24,18 +24,20 @@ services:
     - -c
     - synchronized_standby_slots=replication_slot
     healthcheck:
-      test: [
-        CMD,
-        pg_isready
-      ]
       timeout: 5s
       start_period: 10s
       interval: 10s
       retries: 5
+      test: [
+        CMD,
+        pg_isready
+      ]
+      
     volumes:
     - ./pulse_obfuscator.sql:/docker-entrypoint-initdb.d/pulse_obfuscator.sql:ro,z
     - ./pulse_sequences_tables.sql:/docker-entrypoint-initdb.d/pulse_sequences_tables.sql:ro,z
     - ./salle_prise_de_commande_aggregates.sql:/docker-entrypoint-initdb.d/salle_prise_de_commande_aggregates.sql:ro,z
+    - ./salle_prise_de_commande_aggregate_executed_by.sql:/docker-entrypoint-initdb.d/salle_prise_de_commande_aggregate_executed_by.sql:ro,z
     - ./salle_prise_de_commande_idempotency_consumer.sql:/docker-entrypoint-initdb.d/salle_prise_de_commande_idempotency_consumer.sql:ro,z
   kafka:
     image: debezium-for-dev-service/kafka:4.2.0
@@ -62,23 +64,24 @@ services:
     - kafka
     - postgres
     environment:
-    - CONFIG_STORAGE_TOPIC=my_connect_configs
-    - LOG_LEVEL=INFO
     - BOOTSTRAP_SERVERS=kafka:29092
     - STATUS_STORAGE_TOPIC=my_connect_statuses
     - OFFSET_STORAGE_TOPIC=my_connect_offsets
     - GROUP_ID=1
+    - CONFIG_STORAGE_TOPIC=my_connect_configs
+    - LOG_LEVEL=INFO
     healthcheck:
+      timeout: 5s
+      start_period: 10s
+      interval: 10s
+      retries: 30
       test: [
         CMD,
         curl,
         -f,
         'http://localhost:8083/connectors'
       ]
-      timeout: 5s
-      start_period: 10s
-      interval: 10s
-      retries: 30
+      
     depends_on:
     - postgres
     - kafka
@@ -97,6 +100,10 @@ services:
     - -dev
     - -dev-no-store-token
     healthcheck:
+      timeout: 5s
+      start_period: 5s
+      interval: 10s
+      retries: 3
       test: [
         CMD,
         wget,
@@ -105,10 +112,7 @@ services:
         --spider,
         'http://127.0.0.0:8200'
       ]
-      timeout: 5s
-      start_period: 5s
-      interval: 10s
-      retries: 3
+      
   openbao-init:
     image: openbao/openbao:2.5.4
     labels:

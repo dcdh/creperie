@@ -6,7 +6,7 @@ import com.damdamdeo.pulse.extension.core.AggregateRootType;
 import com.damdamdeo.pulse.extension.core.consumer.AnyAggregateId;
 import com.damdamdeo.pulse.extension.core.consumer.CurrentVersionInConsumption;
 import com.damdamdeo.pulse.extension.core.consumer.FromApplication;
-import com.damdamdeo.pulse.extension.core.encryption.EncryptedPayload;
+import com.damdamdeo.pulse.extension.core.encryption.Encrypted;
 import com.damdamdeo.pulse.extension.core.event.EventType;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -51,7 +51,7 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
             ps.setTimestamp(5, Timestamp.from(auditEvent.storedAt()));
             ps.setString(6, auditEvent.eventType().type());
             // byte[] -> BYTEA
-            ps.setBytes(7, auditEvent.encryptedPayload().payload());
+            ps.setBytes(7, auditEvent.encrypted().payload());
             ps.setString(8, auditEvent.ownedBy().id());
 
             ps.executeUpdate();
@@ -94,7 +94,7 @@ public class PostgresAuditEventRepository implements AuditEventRepository {
                                 rs.getTimestamp("creation_date").toInstant(),
                                 new EventType(
                                         rs.getString("event_type")),
-                                new EncryptedPayload(
+                                Encrypted.of(
                                         rs.getBytes("encrypted_payload")),
                                 new OwnedBy(
                                         rs.getString("owned_by"))

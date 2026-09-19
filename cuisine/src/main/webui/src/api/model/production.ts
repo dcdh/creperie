@@ -4,11 +4,12 @@
  * CuisineProduction API
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
+import type { PreparationIdentifier } from "./preparationIdentifier";
 import type { Plat } from "./plat";
 import type { Status } from "./status";
 
 export interface Production {
-  id: string;
+  id: PreparationIdentifier;
   plats: Plat[];
   status: Status;
 }

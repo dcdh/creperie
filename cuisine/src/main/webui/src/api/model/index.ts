@@ -24,6 +24,7 @@ export * from "./postPriseDeCommandeCommencerLaPriseDeCommandeBody";
 export * from "./postPriseDeCommandeNumeroDeTableAjouterPlatBody";
 export * from "./postPriseDeCommandeNumeroDeTableDatePriseDeCommandeAjouterPlatBody";
 export * from "./postProductionMarkProductionTermineeBody";
+export * from "./preparationIdentifier";
 export * from "./production";
 export * from "./response";
 export * from "./status";

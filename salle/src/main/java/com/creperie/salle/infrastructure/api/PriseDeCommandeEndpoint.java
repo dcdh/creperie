@@ -7,10 +7,14 @@ import com.creperie.salle.domain.command.FinaliserLaCommande;
 import com.creperie.salle.domain.event.CommandeEnCoursDePrise;
 import com.creperie.salle.domain.event.CommandeFinalisee;
 import com.creperie.salle.domain.event.PlatAjoute;
-import com.damdamdeo.pulse.extension.core.BusinessException;
-import com.damdamdeo.pulse.extension.core.command.CommandHandler;
+import com.creperie.salle.domain.usecase.AjouterPlatUseCase;
+import com.creperie.salle.domain.usecase.CommencerLaPriseDeCommandeUseCase;
+import com.creperie.salle.domain.usecase.FinaliserLaCommandeUseCase;
 import com.damdamdeo.pulse.extension.core.event.EventRepository;
 import com.damdamdeo.pulse.extension.core.event.ExecutedByEvent;
+import com.damdamdeo.pulse.extension.core.usecase.UseCaseException;
+import com.damdamdeo.pulse.extension.obfuscator.runtime.annotation.DeObfuscate;
+import com.damdamdeo.pulse.extension.obfuscator.runtime.annotation.Obfuscate;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -20,34 +24,35 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @Path("priseDeCommande")
 public class PriseDeCommandeEndpoint {
 
-    private final CommandHandler<Commande, CommandeIdentifier> commandeCommandHandler;
-    private final DatePriseDeCommandeProvider datePriseDeCommandeProvider;
+    private final CommencerLaPriseDeCommandeUseCase commencerLaPriseDeCommandeUseCase;
+    private final AjouterPlatUseCase ajouterPlatUseCase;
+    private final FinaliserLaCommandeUseCase finaliserLaCommandeUseCase;
     private final EventRepository<Commande, CommandeIdentifier> eventRepository;
 
-    public PriseDeCommandeEndpoint(final CommandHandler<Commande, CommandeIdentifier> commandeCommandHandler,
-                                   final DatePriseDeCommandeProvider datePriseDeCommandeProvider,
+    public PriseDeCommandeEndpoint(final CommencerLaPriseDeCommandeUseCase commencerLaPriseDeCommandeUseCase,
+                                   final AjouterPlatUseCase ajouterPlatUseCase,
+                                   final FinaliserLaCommandeUseCase finaliserLaCommandeUseCase,
                                    final EventRepository<Commande, CommandeIdentifier> eventRepository) {
-        this.commandeCommandHandler = Objects.requireNonNull(commandeCommandHandler);
-        this.datePriseDeCommandeProvider = Objects.requireNonNull(datePriseDeCommandeProvider);
+        this.commencerLaPriseDeCommandeUseCase = Objects.requireNonNull(commencerLaPriseDeCommandeUseCase);
+        this.ajouterPlatUseCase = Objects.requireNonNull(ajouterPlatUseCase);
+        this.finaliserLaCommandeUseCase = Objects.requireNonNull(finaliserLaCommandeUseCase);
         this.eventRepository = Objects.requireNonNull(eventRepository);
     }
 
-    private Map<NumeroDeTable, DatePriseDeCommande> datePriseDeCommandesParNumeroDeTable = new HashMap<>();
-
     @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Plat", required = true, requiredProperties = {"nom"})
-    public record PlatDTO(String nom) {
+    public record PlatDTO(
+            @Schema(type = SchemaType.STRING, implementation = String.class)
+            Plat nom) {
 
         public static PlatDTO from(final Plat plat) {
-            return new PlatDTO(plat.nom());
+            return new PlatDTO(plat);
         }
     }
 
@@ -74,7 +79,9 @@ public class PriseDeCommandeEndpoint {
 
     @RegisterForReflection(registerFullHierarchy = true)
     @Schema(name = "Event", required = true, requiredProperties = {"nombreDeConvives", "type"})
-    public record CommandeEnCoursDePriseDTO(Integer nombreDeConvives) implements EventDTO {
+    public record CommandeEnCoursDePriseDTO(
+            @Schema(type = SchemaType.NUMBER, implementation = Integer.class)
+            NombreDeConvives nombreDeConvives) implements EventDTO {
 
         @Override
         public String getType() {
@@ -112,9 +119,11 @@ public class PriseDeCommandeEndpoint {
     @Schema(name = "Commande", required = true, requiredProperties = {"commandeIdentifier", "numeroDeTable",
             "nombreDeConvives", "datePriseDeCommande", "plats", "status"})
     public record CommandeDTO(@Schema(type = SchemaType.STRING, implementation = String.class)
-                              CommandeIdentifier commandeIdentifier,
-                              Integer numeroDeTable,
-                              Integer nombreDeConvives,
+                              @Obfuscate CommandeIdentifier commandeIdentifier,
+                              @Schema(type = SchemaType.NUMBER, implementation = Integer.class)
+                              NumeroDeTable numeroDeTable,
+                              @Schema(type = SchemaType.NUMBER, implementation = Integer.class)
+                              NombreDeConvives nombreDeConvives,
                               Instant datePriseDeCommande,
                               List<PlatDTO> plats,
                               Status status) {
@@ -122,8 +131,8 @@ public class PriseDeCommandeEndpoint {
         public static CommandeDTO from(final Commande commande) {
             return new CommandeDTO(
                     commande.id(),
-                    commande.id().numeroDeTable().numero(),
-                    commande.nombreDeConvives().nombre(),
+                    commande.id().numeroDeTable(),
+                    commande.nombreDeConvives(),
                     commande.datePriseDeCommande().date(),
                     commande.plats().stream().map(PlatDTO::from).toList(),
                     commande.status());
@@ -132,8 +141,8 @@ public class PriseDeCommandeEndpoint {
 
     private EventDTO from(final ExecutedByEvent<?> event) {
         return switch (event.event()) {
-            case CommandeEnCoursDePrise e -> new CommandeEnCoursDePriseDTO(e.nombreDeConvives().nombre());
-            case PlatAjoute e -> new PlatAjouteDTO(new PlatDTO(e.plat().nom()));
+            case CommandeEnCoursDePrise e -> new CommandeEnCoursDePriseDTO(e.nombreDeConvives());
+            case PlatAjoute e -> new PlatAjouteDTO(new PlatDTO(e.plat()));
             case CommandeFinalisee e -> new CommandeFinaliseeDTO();
             default -> throw new IllegalStateException("unhandled event: " + event);
         };
@@ -144,17 +153,14 @@ public class PriseDeCommandeEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public ResponseDTO commencerLaPriseDeCommande(
-            @FormParam("nombreDeConvives") final Integer nombreDeConvives,
-            @FormParam("numeroDeTable") final Integer numeroDeTable) throws BusinessException {
-        final NumeroDeTable numero = new NumeroDeTable(numeroDeTable);
-        final DatePriseDeCommande datePriseDeCommande = datePriseDeCommandeProvider.provide();
-        datePriseDeCommandesParNumeroDeTable.put(numero, datePriseDeCommande);
-        final Commande handled = commandeCommandHandler.handle(sequenceNumber -> new CommandeIdentifier(numero, sequenceNumber),
-                new CommencerLaPriseDeCommande(new NombreDeConvives(nombreDeConvives),
-                        numero, datePriseDeCommande), DuplicateCommandException::new);
+            @Schema(type = SchemaType.INTEGER, implementation = Integer.class, required = true)
+            @FormParam("nombreDeConvives") final NombreDeConvives nombreDeConvives,
+            @Schema(type = SchemaType.INTEGER, implementation = Integer.class, required = true)
+            @FormParam("numeroDeTable") final NumeroDeTable numeroDeTable) throws UseCaseException {
+        final Commande executed = commencerLaPriseDeCommandeUseCase.execute(new CommencerLaPriseDeCommande(nombreDeConvives, numeroDeTable, null));
         return new ResponseDTO(
-                CommandeDTO.from(handled),
-                eventRepository.loadOrderByVersionASC(handled.id()).stream().map(this::from).toList());
+                CommandeDTO.from(executed),
+                eventRepository.loadOrderByVersionASC(executed.id()).stream().map(this::from).toList());
     }
 
     @Path("/{commandIdentifier}/ajouterPlat")
@@ -162,26 +168,25 @@ public class PriseDeCommandeEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public ResponseDTO ajouterPlat(
-            @Parameter(schema = @Schema(type = SchemaType.STRING, implementation = String.class, required = true))
-            @PathParam("commandIdentifier") final CommandeIdentifier commandeIdentifier,
-            @FormParam("nom") final String name) throws BusinessException {
-        final Commande handled = commandeCommandHandler.handle(
-                new AjouterPlat(commandeIdentifier, new Plat(name)));
+            @Schema(type = SchemaType.STRING, implementation = String.class, required = true)
+            @DeObfuscate @PathParam("commandIdentifier") final CommandeIdentifier commandeIdentifier,
+            @Schema(type = SchemaType.STRING, implementation = String.class, required = true)
+            @FormParam("nom") final Plat name) throws UseCaseException {
+        final Commande executed = ajouterPlatUseCase.execute(new AjouterPlat(commandeIdentifier, name));
         return new ResponseDTO(
-                CommandeDTO.from(handled),
-                eventRepository.loadOrderByVersionASC(handled.id()).stream().map(this::from).toList());
+                CommandeDTO.from(executed),
+                eventRepository.loadOrderByVersionASC(executed.id()).stream().map(this::from).toList());
     }
-
 
     @Path("/{commandIdentifier}/finaliserLaCommande")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public ResponseDTO finaliserLaCommande(
-            @Parameter(schema = @Schema(type = SchemaType.STRING, implementation = String.class, required = true))
-            @PathParam("commandIdentifier") final CommandeIdentifier commandeIdentifier) throws BusinessException {
-        final Commande handled = commandeCommandHandler.handle(new FinaliserLaCommande(commandeIdentifier));
+            @Schema(type = SchemaType.STRING, implementation = String.class, required = true)
+            @DeObfuscate @PathParam("commandIdentifier") final CommandeIdentifier commandeIdentifier) throws UseCaseException {
+        final Commande executed = finaliserLaCommandeUseCase.execute(new FinaliserLaCommande(commandeIdentifier));
         return new ResponseDTO(
-                CommandeDTO.from(handled),
-                eventRepository.loadOrderByVersionASC(handled.id()).stream().map(this::from).toList());
+                CommandeDTO.from(executed),
+                eventRepository.loadOrderByVersionASC(executed.id()).stream().map(this::from).toList());
     }
 }

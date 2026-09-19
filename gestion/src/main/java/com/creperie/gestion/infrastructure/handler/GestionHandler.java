@@ -14,7 +14,7 @@ import com.damdamdeo.pulse.extension.core.consumer.FromApplication;
 import com.damdamdeo.pulse.extension.core.consumer.Purpose;
 import com.damdamdeo.pulse.extension.core.consumer.event.AggregateRootLoaded;
 import com.damdamdeo.pulse.extension.core.consumer.event.AsyncEventChannelMessageHandler;
-import com.damdamdeo.pulse.extension.core.encryption.EncryptedPayload;
+import com.damdamdeo.pulse.extension.core.encryption.Encrypted;
 import com.damdamdeo.pulse.extension.core.event.EventType;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
 import com.damdamdeo.pulse.extension.core.executedby.ExecutedBy;
@@ -75,7 +75,7 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
                               final CurrentVersionInConsumption currentVersionInConsumption,
                               final ZonedDateTime storedAt,
                               final EventType eventType,
-                              final EncryptedPayload encryptedPayload,
+                              final Encrypted encrypted,
                               final OwnedBy ownedBy,
                               final BelongsTo belongsTo,
                               final ExecutedBy executedBy,
@@ -84,7 +84,7 @@ public class GestionHandler implements AsyncEventChannelMessageHandler<JsonNode>
         if (decryptableEventPayload.isDecrypted()) {
             final AuditEvent auditEvent = new AuditEvent(
                     fromApplication, aggregateRootType, aggregateId, currentVersionInConsumption, storedAt.toInstant(),
-                    eventType, encryptedPayload, ownedBy);
+                    eventType, encrypted, ownedBy);
             auditEventRepository.store(auditEvent);
             final DateDeService dateDeService = DateDeService.from(storedAt.toInstant());
             switch (fromApplication.applicationNaming().name()) {

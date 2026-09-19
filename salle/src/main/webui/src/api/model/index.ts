@@ -5,19 +5,27 @@
  * OpenAPI spec version: 1.0.0-SNAPSHOT
  */
 
+export * from "./ajouterPlatBody";
 export * from "./commande";
+export * from "./commandeNombreDeConvives";
+export * from "./commandeNumeroDeTable";
 export * from "./commandePretePourEtreServie";
+export * from "./commencerLaPriseDeCommandeBody";
 export * from "./event";
 export * from "./event1";
 export * from "./event1Type";
 export * from "./event2";
 export * from "./event2Type";
 export * from "./event3";
+export * from "./eventNombreDeConvives";
 export * from "./eventType";
 export * from "./httpProblem";
 export * from "./httpValidationProblem";
 export * from "./instant";
+export * from "./nombreDeConvives";
+export * from "./numeroDeTable";
 export * from "./plat";
+export * from "./plat1";
 export * from "./postPriseDeCommandeCommandIdentifierAjouterPlatBody";
 export * from "./postPriseDeCommandeCommencerLaPriseDeCommandeBody";
 export * from "./response";

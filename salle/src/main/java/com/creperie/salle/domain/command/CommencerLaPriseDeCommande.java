@@ -16,4 +16,8 @@ public record CommencerLaPriseDeCommande(NombreDeConvives nombreDeConvives,
         Objects.requireNonNull(nombreDeConvives);
         Objects.requireNonNull(numeroDeTable);
     }
+
+    public CommencerLaPriseDeCommande with(final DatePriseDeCommande datePriseDeCommande) {
+        return new CommencerLaPriseDeCommande(nombreDeConvives, numeroDeTable, datePriseDeCommande);
+    }
 }

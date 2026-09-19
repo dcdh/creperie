@@ -2,9 +2,8 @@ package com.creperie.gestion.infrastructure.api;
 
 import com.creperie.gestion.domain.AuditEvent;
 import com.damdamdeo.pulse.extension.common.runtime.encryption.OpenPGPDecryptionService;
-import com.damdamdeo.pulse.extension.core.encryption.DecryptedPayload;
+import com.damdamdeo.pulse.extension.core.encryption.Decrypted;
 import com.damdamdeo.pulse.extension.core.encryption.DecryptionException;
-import com.damdamdeo.pulse.extension.core.encryption.UnableToRetrievePassphraseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,7 +25,7 @@ public class AuditEventDTOMapper {
 
     public AuditEventDTO mapFrom(final AuditEvent auditEvent) {
         try {
-            final DecryptedPayload decrypted = openPGPDecryptionService.decrypt(auditEvent.encryptedPayload(), auditEvent.ownedBy());
+            final Decrypted<byte[]> decrypted = openPGPDecryptionService.decrypt(auditEvent.encrypted(), auditEvent.ownedBy());
             final JsonNode payload = objectMapper.readTree(decrypted.payload());
             final String message;
             switch (auditEvent.fromApplication().name()) {
@@ -72,7 +71,7 @@ public class AuditEventDTOMapper {
         } catch (final DecryptionException e) {
             // can be the case
             return null;
-        } catch (final UnableToRetrievePassphraseException | IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }

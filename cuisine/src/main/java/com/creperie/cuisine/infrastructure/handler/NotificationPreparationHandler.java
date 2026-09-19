@@ -1,27 +1,28 @@
 package com.creperie.cuisine.infrastructure.handler;
 
 import com.creperie.cuisine.domain.Plat;
-import com.creperie.cuisine.domain.PreparationIdentifier;
 import com.creperie.cuisine.domain.Production;
+import com.creperie.cuisine.domain.command.CommandeIdentifier;
 import com.creperie.cuisine.domain.command.ProduireCommande;
-import com.creperie.cuisine.infrastructure.api.ProductionEndpoint;
+import com.creperie.cuisine.domain.usecase.ProduireCommandeUseCase;
+import com.creperie.cuisine.infrastructure.api.CommandeAProduireDTO;
+import com.creperie.cuisine.infrastructure.api.PlatDTO;
 import com.damdamdeo.pulse.extension.consumer.runtime.Source;
 import com.damdamdeo.pulse.extension.consumer.runtime.event.AsyncEventConsumerChannel;
 import com.damdamdeo.pulse.extension.core.AggregateId;
 import com.damdamdeo.pulse.extension.core.AggregateRootType;
 import com.damdamdeo.pulse.extension.core.BelongsTo;
-import com.damdamdeo.pulse.extension.core.BusinessException;
-import com.damdamdeo.pulse.extension.core.command.CommandHandler;
 import com.damdamdeo.pulse.extension.core.consumer.CurrentVersionInConsumption;
 import com.damdamdeo.pulse.extension.core.consumer.DecryptablePayload;
 import com.damdamdeo.pulse.extension.core.consumer.FromApplication;
 import com.damdamdeo.pulse.extension.core.consumer.Purpose;
 import com.damdamdeo.pulse.extension.core.consumer.event.AggregateRootLoaded;
 import com.damdamdeo.pulse.extension.core.consumer.event.AsyncEventChannelMessageHandler;
-import com.damdamdeo.pulse.extension.core.encryption.EncryptedPayload;
+import com.damdamdeo.pulse.extension.core.encryption.Encrypted;
 import com.damdamdeo.pulse.extension.core.event.EventType;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
 import com.damdamdeo.pulse.extension.core.executedby.ExecutedBy;
+import com.damdamdeo.pulse.extension.core.usecase.UseCaseException;
 import com.damdamdeo.pulse.extension.livenotifier.runtime.Audience;
 import com.damdamdeo.pulse.extension.livenotifier.runtime.LiveNotifierPublisher;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,17 +53,13 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
     private static final String COMMANDE_A_PRODUIRE = "CommandeAProduire";
 
     @Inject
-    CommandHandler<Production, PreparationIdentifier> productionCommandeCommandHandler;
+    ProduireCommandeUseCase produireCommandeUseCase;
 
     @Inject
     LiveNotifierPublisher<MessageDTO> liveNotifierMessageDTOPublisher;
 
     @Inject
     LiveNotifierPublisher<CommandeAProduireDTO> liveNotifierCommandeAProduireDTOPublisher;
-
-    @Schema(name = "CommandeAProduire", required = true, requiredProperties = {"id", "plats"})
-    public record CommandeAProduireDTO(String id, List<ProductionEndpoint.PlatDTO> plats) {
-    }
 
     @Schema(name = "Message", required = true, requiredProperties = {"message"})
     public record MessageDTO(String message) {
@@ -76,7 +73,7 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
                               final CurrentVersionInConsumption currentVersionInConsumption,
                               final ZonedDateTime storedAt,
                               final EventType eventType,
-                              final EncryptedPayload encryptedPayload,
+                              final Encrypted encrypted,
                               final OwnedBy ownedBy,
                               final BelongsTo belongsTo,
                               final ExecutedBy executedBy,
@@ -98,22 +95,22 @@ public class NotificationPreparationHandler implements AsyncEventChannelMessageH
                 // jsonNodeDecryptablePayload.payload().get("status").asText();
                 JsonNode jsonNode = jsonNodeDecryptablePayload.payload().get("plats");
                 Validate.validState(jsonNode.isArray());
-                final PreparationIdentifier preparationIdentifier = new PreparationIdentifier(aggregateId.id());
+                final CommandeIdentifier commandeIdentifier = new CommandeIdentifier(aggregateId.id());
                 final List<Plat> plats = new ArrayList<>();
                 jsonNode.elements().forEachRemaining(node -> {
                     plats.add(new Plat(node.get("nom").asText()));
                 });
 
                 try {
-                    productionCommandeCommandHandler.handle(new ProduireCommande(preparationIdentifier, plats));
+                    final Production executed = produireCommandeUseCase.execute(new ProduireCommande(commandeIdentifier, plats));
                     Log.infov("Should notify event ''{0}''", eventType.type());
                     liveNotifierCommandeAProduireDTOPublisher.publish(
                             COMMANDE_A_PRODUIRE, new CommandeAProduireDTO(
-                                    preparationIdentifier.id(),
-                                    plats.stream().map(ProductionEndpoint.PlatDTO::from).toList()), ownedBy,
+                                    executed.id(),
+                                    plats.stream().map(PlatDTO::from).toList()), ownedBy,
                             Audience.AllConnected.INSTANCE);
-                } catch (BusinessException e) {
-                    throw new RuntimeException(e);
+                } catch (final UseCaseException exception) {
+                    throw new RuntimeException(exception);
                 }
             }
         }

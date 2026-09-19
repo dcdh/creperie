@@ -4,7 +4,7 @@ import com.damdamdeo.pulse.extension.core.AggregateId;
 import com.damdamdeo.pulse.extension.core.AggregateRootType;
 import com.damdamdeo.pulse.extension.core.consumer.CurrentVersionInConsumption;
 import com.damdamdeo.pulse.extension.core.consumer.FromApplication;
-import com.damdamdeo.pulse.extension.core.encryption.EncryptedPayload;
+import com.damdamdeo.pulse.extension.core.encryption.Encrypted;
 import com.damdamdeo.pulse.extension.core.event.EventType;
 import com.damdamdeo.pulse.extension.core.event.OwnedBy;
 
@@ -17,7 +17,7 @@ public record AuditEvent(FromApplication fromApplication,
                          CurrentVersionInConsumption currentVersionInConsumption,
                          Instant storedAt,
                          EventType eventType,
-                         EncryptedPayload encryptedPayload,
+                         Encrypted<byte[]> encrypted,
                          OwnedBy ownedBy) {
 
     public AuditEvent {
@@ -27,7 +27,7 @@ public record AuditEvent(FromApplication fromApplication,
         Objects.requireNonNull(currentVersionInConsumption);
         Objects.requireNonNull(storedAt);
         Objects.requireNonNull(eventType);
-        Objects.requireNonNull(encryptedPayload);
+        Objects.requireNonNull(encrypted);
         Objects.requireNonNull(ownedBy);
     }
 }
